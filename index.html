@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FFDB58">
+<meta name="description" content="TIBKAO STOCK - ລະບົບຈັດການສະຕັອກແບບ offline">
+<title>TIBKAO STOCK — Inventory (v9)</title>
+<style>
+    :root {
+        --brand-yellow: #FFDB58;
+        --brand-black: #111111;
+        --brand-white: #FFFFFF;
+        --brand-gray: #F4F4F5;
+        --brand-dark-gray: #333333;
+        --brand-red: #E53E3E;
+        --brand-green: #1E7A46;
+        --brand-blue: #1F5FA8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+
+    body {
+        background-color: var(--brand-gray);
+        color: var(--brand-black);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    input, textarea { -webkit-user-select: text; user-select: text; }
+
+    /* ---------- header ---------- */
+    header {
+        background-color: var(--brand-white);
+        border-bottom: 4px solid var(--brand-black);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        position: sticky; top: 0; z-index: 100;
+    }
+    .logo-wrap { display: flex; align-items: center; gap: 1rem; }
+    .logo-box {
+        background: var(--brand-yellow); border: 3px solid var(--brand-black);
+        width: 45px; height: 45px; flex: 0 0 45px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 900; font-size: 1.5rem; box-shadow: 3px 3px 0 var(--brand-black);
+    }
+    .title { font-weight: 900; font-size: 1.5rem; text-transform: uppercase; letter-spacing: -0.5px; line-height: 1.1; }
+    .tag-offline {
+        font-size: 0.7rem; font-weight: 800; background: var(--brand-black); color: var(--brand-yellow);
+        display: inline-block; padding: 2px 6px; margin-top: 2px;
+    }
+    .head-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    /* ---------- buttons ---------- */
+    .btn {
+        background: var(--brand-white); border: 3px solid var(--brand-black);
+        padding: 0.5rem 1rem; font-weight: 800; cursor: pointer; text-transform: uppercase;
+        font-size: 0.9rem; box-shadow: 4px 4px 0 var(--brand-black);
+        transition: transform .1s ease, box-shadow .1s ease;
+        display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;
+        color: var(--brand-black);
+    }
+    .btn:hover { background: #F0F0F0; }
+    .btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--brand-black); }
+    .btn:focus-visible { outline: 3px dashed var(--brand-blue); outline-offset: 3px; }
+    .btn-yellow { background: var(--brand-yellow); }
+    .btn-yellow:hover { background: #F5CE3E; }
+    .btn-black { background: var(--brand-black); color: var(--brand-yellow); box-shadow: 4px 4px 0 var(--brand-yellow); }
+    .btn-black:hover { background: #000; }
+    .btn-black:active { box-shadow: 0 0 0 var(--brand-yellow); }
+    .btn-danger { background: var(--brand-red); color: #fff; }
+    .btn-danger:hover { background: #C53030; }
+    .btn-icon {
+        padding: 0.25rem 0.55rem; font-size: 1rem; font-weight: 900;
+        box-shadow: 2px 2px 0 var(--brand-black); background: var(--brand-white);
+        border: 3px solid var(--brand-black); cursor: pointer; color: var(--brand-black);
+    }
+    .btn-icon:active { transform: translate(2px,2px); box-shadow: 0 0 0 var(--brand-black); }
+    .btn-icon:focus-visible { outline: 3px dashed var(--brand-blue); outline-offset: 2px; }
+    .btn[disabled], .btn-icon[disabled], .btn-qty[disabled] {
+        opacity: .3; cursor: not-allowed; transform: none !important; box-shadow: 3px 3px 0 var(--brand-black) !important;
+    }
+
+    /* ---------- layout ---------- */
+    .layout {
+        display: grid; grid-template-columns: 320px 1fr; gap: 2rem;
+        padding: 2rem; max-width: 1600px; margin: 0 auto; width: 100%;
+    }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; padding: 1rem; gap: 1.25rem; } }
+
+    .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+    .widget {
+        background: var(--brand-white); border: 4px solid var(--brand-black);
+        box-shadow: 6px 6px 0 var(--brand-black); padding: 1.25rem;
+    }
+    .widget-title {
+        font-weight: 900; font-size: 1.05rem; text-transform: uppercase;
+        border-bottom: 3px solid var(--brand-black); padding-bottom: 0.5rem; margin-bottom: 1rem;
+    }
+    .stat-row { font-weight: 800; font-size: 1rem; margin-bottom: .5rem; display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+    .stat-row span.num { font-size: 1.4rem; font-weight: 900; }
+    .stat-total { color: var(--brand-green); }
+    .stat-out { color: var(--brand-red); }
+    .stat-low { color: #B7791F; }
+
+    .field { width: 100%; padding: 0.65rem; border: 3px solid var(--brand-black); font-size: 1rem; font-weight: 700; background: #fff; }
+    .field:focus { outline: 3px dashed var(--brand-blue); outline-offset: 1px; }
+    .field-sm { padding: .45rem .6rem; font-size: .9rem; }
+    .mb-1 { margin-bottom: 1rem; }
+    .mb-half { margin-bottom: .5rem; }
+
+    .filter-btn { width: 100%; text-align: left; justify-content: flex-start; margin-bottom: 0.5rem; }
+    .filter-btn.is-active { background: var(--brand-yellow); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---------- inventory ---------- */
+    .product-group {
+        background: var(--brand-white); border: 4px solid var(--brand-black);
+        box-shadow: 6px 6px 0 var(--brand-black); margin-bottom: 2rem;
+    }
+    .product-header {
+        padding: 1rem 1.25rem; background: var(--brand-white);
+        border-bottom: 4px solid var(--brand-black);
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .product-header h3 { font-weight: 900; font-size: 1.4rem; text-transform: uppercase; }
+    .product-meta { font-size: .8rem; font-weight: 800; color: var(--brand-dark-gray); }
+
+    .color-block { padding: 1.25rem; border-bottom: 4px solid var(--brand-black); }
+    .color-block:last-child { border-bottom: none; }
+
+    .color-block.dark-mode { color: var(--brand-white); }
+    .color-block.dark-mode .size-card {
+        background: var(--brand-dark-gray); border-color: var(--brand-white);
+        color: var(--brand-white); box-shadow: 4px 4px 0 var(--brand-white);
+    }
+    .color-block.dark-mode .btn-icon, .color-block.dark-mode .btn-qty {
+        background: var(--brand-white); color: var(--brand-black);
+        border-color: var(--brand-white); box-shadow: 2px 2px 0 var(--brand-black);
+    }
+    .color-header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .color-header-name { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+
+    .color-picker-input {
+        width: 38px; height: 38px; border: 3px solid var(--brand-black);
+        padding: 0; cursor: pointer; border-radius: 0; background: var(--brand-white);
+    }
+    .color-block.dark-mode .color-picker-input { border-color: var(--brand-white); }
+    .color-label { font-weight: 900; font-size: 1.35rem; text-transform: uppercase; }
+
+    .sizes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1.25rem; }
+    .size-card {
+        background: var(--brand-white); border: 3px solid var(--brand-black);
+        padding: 1rem; box-shadow: 4px 4px 0 var(--brand-black);
+        display: flex; flex-direction: column; gap: .9rem;
+    }
+    .size-header { display: flex; justify-content: space-between; align-items: center; gap: .4rem; font-weight: 900; border-bottom: 2px dashed currentColor; padding-bottom: .5rem; }
+    .size-label { font-weight: 900; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .qty-controls { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .qty-number {
+        font-size: 2.3rem; font-weight: 900; cursor: pointer; padding: 0 .75rem;
+        border: 2px dashed transparent; min-width: 3.5rem; text-align: center; background: none;
+    }
+    .qty-number:hover { border-color: currentColor; }
+    .qty-number:focus-visible { outline: 3px dashed var(--brand-blue); outline-offset: 2px; }
+    .qty-number.is-zero { opacity: .55; }
+    .btn-qty {
+        width: 48px; height: 48px; font-size: 1.5rem; font-weight: 900;
+        border: 3px solid var(--brand-black); background: var(--brand-white);
+        cursor: pointer; box-shadow: 3px 3px 0 var(--brand-black); color: var(--brand-black);
+    }
+    .btn-qty:active { transform: translate(3px,3px); box-shadow: 0 0 0 var(--brand-black); }
+    .btn-qty:focus-visible { outline: 3px dashed var(--brand-blue); outline-offset: 2px; }
+    .low-badge {
+        display: inline-block; font-size: .7rem; font-weight: 900; background: #FFF3C4;
+        border: 2px solid var(--brand-black); padding: 1px 5px; margin-left: .25rem;
+    }
+
+    /* ---------- history ---------- */
+    .history-item {
+        background: var(--brand-white); border: 3px solid var(--brand-black);
+        padding: .85rem 1rem; margin-bottom: .75rem; box-shadow: 4px 4px 0 var(--brand-black);
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    .history-main { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+    .swatch { width: 26px; height: 26px; border: 2px solid var(--brand-black); flex: 0 0 26px; }
+    .history-title { font-weight: 900; font-size: 1.1rem; overflow-wrap: anywhere; }
+    .history-sub { font-weight: 700; font-size: .85rem; color: var(--brand-dark-gray); }
+    .history-delta { font-size: 1.8rem; font-weight: 900; white-space: nowrap; }
+    .is-plus { color: var(--brand-green); }
+    .is-minus { color: var(--brand-red); }
+    .date-chip {
+        background: var(--brand-black); color: var(--brand-yellow); padding: .4rem .9rem;
+        margin: 1.5rem 0 .9rem; border: 3px solid var(--brand-black);
+        display: inline-block; font-weight: 900; text-transform: uppercase;
+    }
+    .deleted-tag { color: var(--brand-red); font-weight: 900; }
+
+    .empty-box {
+        text-align: center; padding: 3.5rem 1.5rem; border: 4px dashed var(--brand-black);
+        font-weight: 800; font-size: 1.15rem; background: var(--brand-white);
+    }
+    .empty-box small { display: block; margin-top: .75rem; font-weight: 700; font-size: .9rem; color: var(--brand-dark-gray); }
+
+    /* ---------- modal ---------- */
+    .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,.75);
+        display: none; justify-content: center; align-items: center; z-index: 200; padding: 1rem;
+        overflow-y: auto;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+        background: var(--brand-white); border: 5px solid var(--brand-black);
+        width: 100%; max-width: 520px; box-shadow: 8px 8px 0 var(--brand-yellow);
+        max-height: 92vh; overflow-y: auto;
+    }
+    .modal-header {
+        background: var(--brand-yellow); padding: 1rem; border-bottom: 4px solid var(--brand-black);
+        font-weight: 900; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+        position: sticky; top: 0; z-index: 2;
+    }
+    .modal-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+    .input-group label { display: block; font-weight: 900; margin-bottom: .4rem; text-transform: uppercase; font-size: .85rem; }
+    .input-group input { width: 100%; padding: .75rem; border: 3px solid var(--brand-black); font-size: 1rem; font-weight: 700; }
+    .input-group input:focus { outline: 3px dashed var(--brand-blue); outline-offset: 1px; }
+    .hint { font-size: .78rem; font-weight: 700; color: var(--brand-dark-gray); margin-top: .35rem; }
+    .modal-actions { display: flex; gap: .75rem; }
+    .modal-actions .btn { flex: 1; }
+
+    /* ---------- sync bar ---------- */
+    .syncbar {
+        display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+        background: var(--brand-black); color: #fff; padding: .55rem 1.5rem;
+        font-weight: 800; font-size: .85rem; position: sticky; top: 0; z-index: 95;
+    }
+    .syncbar .dot { width: 12px; height: 12px; border-radius: 50%; background: #999; flex: 0 0 12px; }
+    .syncbar.online .dot { background: #48BB78; }
+    .syncbar.offline .dot { background: #F6AD55; }
+    .syncbar.error .dot { background: var(--brand-red); }
+    .syncbar .grow { flex: 1 1 auto; }
+    .syncbar button {
+        background: var(--brand-yellow); color: var(--brand-black); border: 2px solid var(--brand-yellow);
+        font-weight: 900; padding: .25rem .6rem; cursor: pointer; font-size: .8rem; text-transform: uppercase;
+    }
+    .syncbar button.ghost { background: transparent; color: var(--brand-yellow); }
+    .syncbar button:focus-visible { outline: 3px dashed #fff; outline-offset: 2px; }
+    .syncbar .pending { background: var(--brand-red); padding: .1rem .45rem; border: 2px solid #fff; }
+
+    /* ---------- PIN lock gate ---------- */
+    #pinGate {
+        position: fixed; inset: 0; z-index: 500; display: none;
+        background: var(--brand-black);
+        align-items: center; justify-content: center; padding: 1.25rem;
+        -webkit-user-select: none; user-select: none;
+    }
+    #pinGate.active { display: flex; }
+    /* ຕອນລັອກ: ເຊື່ອງເນື້ອໃນແອັບທັງໝົດ ບໍ່ໃຫ້ອ່ານໄດ້ຈາກຂ້າງຫຼັງ */
+    body.locked > *:not(#pinGate):not(#toast-host) { display: none !important; }
+    .pin-card {
+        background: var(--brand-white); border: 5px solid var(--brand-yellow);
+        box-shadow: 10px 10px 0 var(--brand-yellow); width: 100%; max-width: 380px;
+        padding: 1.5rem; text-align: center;
+    }
+    .pin-logo {
+        background: var(--brand-yellow); border: 3px solid var(--brand-black);
+        width: 54px; height: 54px; margin: 0 auto .75rem;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 900; font-size: 1.6rem; box-shadow: 3px 3px 0 var(--brand-black);
+    }
+    .pin-title { font-weight: 900; font-size: 1.3rem; text-transform: uppercase; letter-spacing: -.5px; }
+    .pin-sub { font-weight: 700; font-size: .85rem; color: var(--brand-dark-gray); margin: .4rem 0 1.1rem; line-height: 1.5; }
+    #pin-input {
+        width: 100%; padding: .85rem; border: 3px solid var(--brand-black);
+        font-size: 1.8rem; font-weight: 900; text-align: center; letter-spacing: .5rem;
+    }
+    #pin-input:focus { outline: 3px dashed var(--brand-blue); outline-offset: 1px; }
+    .pin-msg { font-weight: 800; font-size: .85rem; min-height: 1.2rem; margin-top: .7rem; }
+    .pin-msg.err { color: var(--brand-red); }
+    .pin-msg.ok { color: var(--brand-green); }
+
+    /* ---------- toast ---------- */
+    #toast-host {
+        position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
+        z-index: 400; display: flex; flex-direction: column; gap: .5rem; align-items: center;
+        pointer-events: none; width: min(92vw, 460px);
+    }
+    .toast {
+        background: var(--brand-black); color: #fff; border: 3px solid var(--brand-black);
+        box-shadow: 4px 4px 0 rgba(0,0,0,.25); padding: .7rem 1rem; font-weight: 800;
+        width: 100%; text-align: center; animation: pop .18s ease-out;
+    }
+    .toast.ok { background: #14532D; }
+    .toast.err { background: #7F1D1D; }
+    .toast.info { background: var(--brand-blue); }
+    @keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    /* ---------- summary report ---------- */
+    #summary-view { display: none; position: fixed; inset: 0; background: #fff; z-index: 300; overflow-y: auto; }
+    #summary-view.active { display: block; }
+    .report-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .report-head { border-bottom: 5px solid var(--brand-black); padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+    .report-title { font-size: 2rem; font-weight: 900; text-transform: uppercase; }
+    .report-sub { font-weight: 800; color: var(--brand-dark-gray); }
+    .report-section-title { font-size: 1.15rem; font-weight: 900; text-transform: uppercase; margin: 1.75rem 0 .75rem; padding-bottom: .35rem; border-bottom: 3px solid var(--brand-black); }
+    table.report-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    table.report-table th, table.report-table td { border: 2px solid var(--brand-black); padding: .45rem .6rem; text-align: left; vertical-align: top; }
+    table.report-table th { background: var(--brand-yellow); font-weight: 900; text-transform: uppercase; font-size: .8rem; }
+    table.report-table td.num { text-align: right; font-weight: 900; white-space: nowrap; }
+    table.report-table tr.total-row td { background: var(--brand-gray); font-weight: 900; }
+    .report-foot { margin-top: 2rem; font-size: .85rem; font-weight: 700; color: var(--brand-dark-gray); display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .report-toolbar { position: sticky; top: 0; background: #fff; border-bottom: 4px solid var(--brand-black); padding: .9rem 1.5rem; display: flex; gap: .75rem; justify-content: flex-end; z-index: 5; flex-wrap: wrap; }
+    .legend-inline { display: inline-flex; align-items: center; gap: .4rem; margin-right: 1rem; font-weight: 800; font-size: .85rem; }
+    .legend-swatch { width: 16px; height: 16px; border: 2px solid var(--brand-black); display: inline-block; }
+
+    @media print {
+        @page { size: A4; margin: 12mm; }
+        body { background: #fff; }
+        body.printing > *:not(#summary-view) { display: none !important; }
+        body.printing #summary-view { position: static; display: block !important; }
+        .report-toolbar { display: none !important; }
+        .report-wrap { max-width: none; padding: 0; }
+        table.report-table { font-size: 11pt; }
+        table.report-table tr { break-inside: avoid; page-break-inside: avoid; }
+        thead { display: table-header-group; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="logo-wrap">
+        <div class="logo-box">TS</div>
+        <div>
+            <div class="title">TIBKAO STOCK</div>
+            <span class="tag-offline">SHARED · v9</span>
+            <a id="repo-link" href="#" style="display:none; font-size:.7rem; font-weight:800; color:var(--brand-dark-gray); margin-left:.4rem; text-decoration:underline;">ຊອດໂຄ້ດ</a>
+        </div>
+    </div>
+    <div class="head-actions">
+        <button type="button" data-action="tab" data-tab="inventory" id="tab-btn-inventory" class="btn btn-yellow">Inventory</button>
+        <button type="button" data-action="tab" data-tab="history" id="tab-btn-history" class="btn">Net History</button>
+        <button type="button" data-action="summary" class="btn">📊 ລາຍງານປະຈຳວັນ</button>
+        <button type="button" data-action="summary-image" class="btn btn-black">📸 ດຶງຮູບ PNG</button>
+    </div>
+</header>
+
+<div class="syncbar" id="syncbar">
+    <span class="dot"></span>
+    <span id="sync-text">ກຳລັງເລີ່ມ...</span>
+    <span id="sync-pending" class="pending" style="display:none;">0 ລໍຖ້າສົ່ງ</span>
+    <span class="grow"></span>
+    <button type="button" data-action="sync-now" id="sync-now-btn">↻ ດຶງຂໍ້ມູນລ່າສຸດ</button>
+    <button type="button" class="ghost" data-action="lock-now" id="lock-btn" style="display:none;">🔒 ລັອກ</button>
+    <button type="button" class="ghost" data-action="open-setup">⚙ ຕັ້ງຄ່າ</button>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <div class="widget">
+            <div class="widget-title">Quick Stats</div>
+            <div class="stat-row"><span>ລວມທັງໝົດ (Total Items)</span><span class="num stat-total" id="stat-total">0</span></div>
+            <div class="stat-row"><span>ອອກມື້ນີ້ (Out Today)</span><span class="num stat-out" id="stat-out">0</span></div>
+            <div class="stat-row"><span>ໃກ້ໝົດ &lt;3 (Low Stock)</span><span class="num stat-low" id="stat-low">0</span></div>
+            <div class="stat-row" style="border-top:2px dashed #ccc; padding-top:.5rem; margin-top:.5rem;">
+                <span>ສະຖານະຂໍ້ມູນ</span><span id="stat-save" style="font-weight:800;">—</span>
+            </div>
+        </div>
+
+        <div class="widget">
+            <div class="widget-title">ຄົ້ນຫາ / ກັ່ນຕອງ</div>
+            <input type="search" id="search-input" class="field mb-1" placeholder="ພິມຊື່ສິນຄ້າ ຫຼື ສີ..." aria-label="ຄົ້ນຫາສິນຄ້າ">
+            <select id="sort-select" class="field field-sm mb-1" aria-label="ຈັດລຳດັບ">
+                <option value="name">ຈັດຕາມຊື່ (A→Z)</option>
+                <option value="qty-desc">ສະຕັອກຫຼາຍ → ໜ້ອຍ</option>
+                <option value="qty-asc">ສະຕັອກໜ້ອຍ → ຫຼາຍ</option>
+                <option value="manual">ລຳດັບທີ່ຕັ້ງໄວ້</option>
+            </select>
+            <label style="display:flex; align-items:center; gap:.5rem; font-weight:800; font-size:.9rem;">
+                <input type="checkbox" id="low-only" style="width:20px;height:20px;"> ສະເພາະໃກ້ໝົດ (&lt;3)
+            </label>
+            <div id="product-filter-list" style="display:flex; flex-direction:column; margin-top:1rem;"></div>
+        </div>
+
+        <div class="widget">
+            <div class="widget-title">ການເຊື່ອມຕໍ່ຖານຂໍ້ມູນກາງ</div>
+            <div id="conn-summary" style="font-weight:700; font-size:.9rem; line-height:1.5; margin-bottom:.75rem;">—</div>
+            <button type="button" data-action="open-setup" class="btn mb-1" style="width:100%;">⚙ ຕັ້ງຄ່າ / ເຊື່ອມຕໍ່</button>
+            <button type="button" data-action="sync-now" class="btn btn-black mb-1" style="width:100%;">↻ ດຶງຂໍ້ມູນລ່າສຸດ</button>
+            <div class="hint">ຖ້າຕັ້ງຄ່າແລ້ວ ທຸກຄົນທີ່ໃສ່ URL ດຽວກັນຈະເຫັນຂໍ້ມູນຊຸດດຽວກັນ.</div>
+        </div>
+
+        <div class="widget">
+            <div class="widget-title">Data Backup</div>
+            <button type="button" data-action="export" class="btn btn-black mb-1" style="width:100%;">💾 Export JSON</button>
+            <button type="button" data-action="export-csv" class="btn mb-1" style="width:100%;">📄 Export CSV</button>
+            <label class="btn" style="width:100%; background: var(--brand-gray);">
+                📂 Import JSON
+                <input type="file" accept=".json,application/json" style="display:none;" id="import-file">
+            </label>
+            <div class="hint">ກ່ອນ import ທຸກຄັ້ງ ລະບົບຈະສຳຮອງຂໍ້ມູນເກົ່າໄວ້ອັດຕະໂນມັດ ແລະ ຖາມຢືນຢັນກ່ອນທັບ.</div>
+        </div>
+
+        <div class="widget">
+            <div class="widget-title">ຜູ້ບັນທຶກ (Staff)</div>
+            <input type="text" id="staff-input" class="field field-sm" placeholder="ຊື່ຜູ້ບັນທຶກ ເຊັ່ນ: ນ້ອຍ" maxlength="30">
+            <div class="hint">ຊື່ນີ້ຈະຕິດໃນປະຫວັດການເຄື່ອນໄຫວ ເພື່ອຮູ້ວ່າໃຜແກ້.</div>
+        </div>
+    </aside>
+
+    <main>
+        <div id="tab-inventory" class="tab-content active">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <h2 class="title" style="font-size:1.75rem;" id="inventory-view-title">All Products</h2>
+                <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
+                    <button type="button" data-action="undo" id="undo-btn" class="btn" disabled title="ຍົກເລິກການແກ້ຫຼ້າສຸດ">↩︎ Undo</button>
+                    <button type="button" data-action="modal-add" class="btn btn-black">+ Add Product</button>
+                </div>
+            </div>
+            <div id="inventory-container"></div>
+        </div>
+
+        <div id="tab-history" class="tab-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; align-items:center; gap:1rem; flex-wrap:wrap;">
+                <h2 class="title" style="font-size:1.75rem;">True Net Daily History</h2>
+                <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+                    <span style="font-weight:800; background:var(--brand-yellow); border:2px solid var(--brand-black); padding:.45rem .7rem; font-size:.85rem;">*ຫັກລັບກັນເອງອັດຕະໂນມັດ</span>
+                    <button type="button" data-action="clear-history" class="btn btn-danger">🗑 ລ້າງປະຫວັດ</button>
+                </div>
+            </div>
+            <div id="history-container"></div>
+        </div>
+    </main>
+</div>
+
+<!-- ============ Modals ============ -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="addModal-title">
+        <div class="modal-header">
+            <span id="addModal-title">Add Product / Variant</span>
+            <button type="button" class="btn-icon" data-action="close-modal" data-modal="addModal" aria-label="ປິດ">X</button>
+        </div>
+        <form class="modal-body" id="add-form">
+            <div class="input-group">
+                <label for="add-name">Product Name</label>
+                <input type="text" id="add-name" required maxlength="60" placeholder="e.g. T-Shirt" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="add-colors">Colors (ຄັ່ນດ້ວຍ , )</label>
+                <input type="text" id="add-colors" required placeholder="e.g. Black, White, Red" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="add-sizes">Sizes (ຄັ່ນດ້ວຍ , )</label>
+                <input type="text" id="add-sizes" required placeholder="e.g. S, M, L" autocomplete="off">
+            </div>
+            <div class="hint">ຖ້າມີສິນຄ້າຊື່ນີ້ຢູ່ແລ້ວ ລະບົບຈະເພີ່ມສະເພາະສີ/ຂະໜາດທີ່ຍັງບໍ່ມີ.</div>
+            <div class="modal-actions">
+                <button type="button" class="btn" data-action="close-modal" data-modal="addModal">ຍົກເລິກ</button>
+                <button type="submit" class="btn btn-yellow">CREATE</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="qtyModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="qtyModal-title" style="max-width:420px;">
+        <div class="modal-header">
+            <span id="qtyModal-title">ແກ້ຈຳນວນ</span>
+            <button type="button" class="btn-icon" data-action="close-modal" data-modal="qtyModal" aria-label="ປິດ">X</button>
+        </div>
+        <form class="modal-body" id="qty-form">
+            <div class="hint" id="qty-target" style="font-size:.95rem;"></div>
+            <div class="input-group">
+                <label for="qty-input">ຈຳນວນທີ່ຖືກຕ້ອງ</label>
+                <input type="number" id="qty-input" min="0" step="1" required inputmode="numeric" style="font-size:1.6rem; text-align:center;">
+            </div>
+            <div class="hint">ລະບົບຈະບັນທຶກສ່ວນຕ່າງເຂົ້າປະຫວັດໃຫ້ເອງ.</div>
+            <div class="modal-actions">
+                <button type="button" class="btn" data-action="close-modal" data-modal="qtyModal">ຍົກເລິກ</button>
+                <button type="submit" class="btn btn-yellow">ບັນທຶກ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="confirm-title" style="max-width:460px;">
+        <div class="modal-header">
+            <span id="confirm-title">ຢືນຢັນ</span>
+            <button type="button" class="btn-icon" data-action="close-modal" data-modal="confirmModal" aria-label="ປິດ">X</button>
+        </div>
+        <div class="modal-body">
+            <div id="confirm-msg" style="font-weight:700; line-height:1.55;">—</div>
+            <label style="display:flex; align-items:center; gap:.5rem; font-weight:800; font-size:.9rem;" id="confirm-extra-wrap">
+                <input type="checkbox" id="confirm-extra" style="width:20px;height:20px;"> <span id="confirm-extra-label">—</span>
+            </label>
+            <div class="modal-actions">
+                <button type="button" class="btn" data-action="close-modal" data-modal="confirmModal">ຍົກເລິກ</button>
+                <button type="button" class="btn btn-danger" id="confirm-ok">ຢືນຢັນ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="setupModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="setup-title">
+        <div class="modal-header">
+            <span id="setup-title">ຕັ້ງຄ່າຖານຂໍ້ມູນກາງ</span>
+            <button type="button" class="btn-icon" data-action="close-modal" data-modal="setupModal" aria-label="ປິດ">X</button>
+        </div>
+        <div class="modal-body">
+            <div class="hint" style="font-size:.9rem; line-height:1.6;">
+                ວາງ <b>Web app URL</b> ທີ່ລົງທ້າຍດ້ວຍ <code>/exec</code> ແລະ <b>ລະຫັດລັບ (SECRET)</b>
+                ທີ່ຕັ້ງໃນ Apps Script. ລາຍລະອຽດຢູ່ໃນຄູ່ມື <i>SHARED_SETUP_LAO.md</i>.
+            </div>
+            <div class="input-group">
+                <label for="cfg-url">Web app URL (/exec)</label>
+                <input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/AKfy.../exec" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="cfg-secret">ລະຫັດລັບ (SECRET)</label>
+                <input type="text" id="cfg-secret" placeholder="tibkao-2026" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="cfg-device">ຊື່ເຄື່ອງນີ້ / ຊື່ຜູ້ໃຊ້</label>
+                <input type="text" id="cfg-device" maxlength="30" placeholder="ເຊັ່ນ: ໜ້າຮ້ານ-1 ຫຼື ນ້ອຍ" autocomplete="off">
+            </div>
+            <div class="hint" id="setup-status">—</div>
+            <div class="modal-actions">
+                <button type="button" class="btn" data-action="close-modal" data-modal="setupModal">ປິດ</button>
+                <button type="button" class="btn" data-action="test-conn">ທົດສອບ</button>
+                <button type="button" class="btn btn-yellow" data-action="save-setup">ບັນທຶກ ແລະ ເຊື່ອມຕໍ່</button>
+            </div>
+            <div class="hint">ຕ້ອງການໃຊ້ຄົນດຽວແບບ offline ບໍ່ຕ້ອງຕັ້ງຫຍັງ — ໃຊ້ໄຟລ໌ <b>tibkao_stock_v9.html</b> ແທນ.</div>
+
+            <hr style="border:none; border-top:3px dashed var(--brand-black); margin:.4rem 0;">
+            <div class="input-group">
+                <label>ລະຫັດ PIN ລັອກໜ້າຈໍ</label>
+                <div id="pin-status" class="hint" style="margin-bottom:.6rem;">—</div>
+                <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+                    <button type="button" class="btn" data-action="pin-set" id="pin-set-btn">ຕັ້ງ / ປ່ຽນ PIN</button>
+                    <button type="button" class="btn btn-danger" data-action="pin-remove" id="pin-remove-btn" style="display:none;">ລຶບ PIN</button>
+                </div>
+                <div class="hint">PIN ຈະຖືກເກັບຢູ່ Google Sheet (ຊີດ Config) ຈຶ່ງທຸກເຄື່ອງໃຊ້ PIN ດຽວກັນ. ແອັບຈະລັອກເອງຫຼັງບໍ່ໃຊ້ 10 ນາທີ.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pinGate" role="dialog" aria-modal="true" aria-label="ລັອກໜ້າຈໍ">
+    <form class="pin-card" id="pin-form" autocomplete="off">
+        <div class="pin-logo">TS</div>
+        <div class="pin-title">TIBKAO STOCK</div>
+        <div class="pin-sub" id="pin-sub">ໃສ່ລະຫັດ PIN ເພື່ອເຂົ້າໃຊ້</div>
+        <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*"
+               maxlength="12" placeholder="••••" aria-label="ລະຫັດ PIN">
+        <div class="pin-msg" id="pin-msg"></div>
+        <button type="submit" class="btn btn-yellow" style="width:100%; margin-top:.9rem; font-size:1.05rem;" id="pin-submit">ເຂົ້າໃຊ້</button>
+        <button type="button" class="btn" style="width:100%; margin-top:.6rem;" data-action="open-setup">⚙ ຕັ້ງຄ່າການເຊື່ອມຕໍ່</button>
+        <div class="pin-sub" style="margin-top:1rem; margin-bottom:0;">ລືມ PIN? ຕິດຕໍ່ຜູ້ດູແລລະບົບ ເພື່ອລຶບ PIN ໃນ Google Sheet (ຊີດ Config)</div>
+    </form>
+</div>
+
+<div id="toast-host" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ============ Summary report (printable) ============ -->
+<div id="summary-view" role="dialog" aria-modal="true" aria-label="ລາຍງານປະຈຳວັນ">
+    <div class="report-toolbar">
+        <button type="button" class="btn" data-action="close-summary">✕ ປິດ</button>
+        <button type="button" class="btn btn-black" data-action="print-summary">🖨 ພິມ / ບັນທຶກ PDF</button>
+    </div>
+    <div class="report-wrap" id="summary-content"></div>
+</div>
+
+<script>
+/* =====================================================================
+   TIBKAO STOCK v9 — single-stable-key storage, XSS-safe rendering,
+   delegated events, no data loss on version change.
+   ===================================================================== */
+(function () {
+    'use strict';
+
+    /* ---------- constants ---------- */
+    var DB_KEY = 'TIBKAO_DB_V1';
+    var BACKUP_KEY = 'TIBKAO_DB_V1_AUTO_BACKUP';
+    var CFG_KEY = 'TIBKAO_SHARED_CFG';     // { url, secret, device }
+    var QUEUE_KEY = 'TIBKAO_SHARED_QUEUE'; // ຄຳສັ່ງທີ່ຍັງສົ່ງບໍ່ສຳເລັດ
+    // ===== ຄ່າທີ່ຝັງມາກັບໄຟລ໌ (ບິວດ໌ອັດຕະໂນມັດ) =====
+    var BUNDLED = { url: 'https://script.google.com/macros/s/AKfycbzhGtkX9dR74DKo0a3sM2jRXJJpRcAkYV9Hq9xxVPkfSyURSb_rIpFnV3vlvCV6gwtr/exec', secret: 'NznSQ7SmpgEf3sgFAywbExox2CXr' };
+    var BUNDLED_REPO = 'l3xable-dev/stock';
+
+    var POLL_MS = 10000;                   // ດຶງຂໍ້ມູນໃໝ່ທຸກ 10 ວິນາທີ
+    var PIN_KEY = 'TIBKAO_PIN_CACHE';      // { hash, version } ຂອງເຄື່ອງນີ້
+    var AUTO_LOCK_MS = 10 * 60 * 1000;     // ລັອກເອງຫຼັງບໍ່ໃຊ້ 10 ນາທີ
+    var PIN_SALT = 'tibkao-pin-v1|';       // ຄ່າຄົງທີ່ ເພື່ອໃຫ້ hash ຕົງກັນທຸກເຄື່ອງ
+    var SCHEMA = 1;
+    var LOW_STOCK = 3;
+    var UNDO_LIMIT = 30;
+
+    // legacy keys from every previous version (newest first)
+    var LEGACY_KEYS = [
+        'TIBKAO_V6_PRODUCTS', 'TIBKAO_V6_HISTORY', 'TIBKAO_V6_PALETTE',
+        'TIBKAO_V5_PRODUCTS', 'TIBKAO_V5_HISTORY', 'TIBKAO_V5_PALETTE',
+        'TIBKAO_STOCK_PRODUCTS_V5', 'TIBKAO_STOCK_HISTORY_V5', 'TIBKAO_STOCK_PALETTE_V5'
+    ];
+    var LEGACY_GROUPS = [
+        { products: 'TIBKAO_V6_PRODUCTS', history: 'TIBKAO_V6_HISTORY', palette: 'TIBKAO_V6_PALETTE' },
+        { products: 'TIBKAO_V5_PRODUCTS', history: 'TIBKAO_V5_HISTORY', palette: 'TIBKAO_V5_PALETTE' },
+        { products: 'TIBKAO_STOCK_PRODUCTS_V5', history: 'TIBKAO_STOCK_HISTORY_V5', palette: 'TIBKAO_STOCK_PALETTE_V5' }
+    ];
+
+    var DEFAULT_COLORS = {
+        'Black': '#111111', 'White': '#FFFFFF', 'Red': '#E53E3E',
+        'Blue': '#3182CE', 'Green': '#38A169', 'Yellow': '#FFDB58'
+    };
+
+    /* ---------- state ---------- */
+    var db = null;                 // { schema, products, historyLogs, colorPalette }
+    var undoStack = [];            // [{ snapshot, label }]
+    var activeFilter = 'All';
+    var query = '';
+    var sortMode = 'name';
+    var lowOnly = false;
+    var saveTimer = null;
+    var idCounter = 0;
+    var safeStorage = true;
+
+    /* ---------- shared-mode state ---------- */
+    var cfg = { url: '', secret: '', device: '' };
+    var serverDate = '';        // ວັນທີ່ຕາມ server (ໃຫ້ທຸກເຄື່ອງບັນທຶກວັນດຽວກັນ)
+    var syncState = 'off';      // off | connecting | online | offline | error
+    var pending = [];           // ຄຳສັ່ງລໍຖ້າສົ່ງ
+    var lastSyncAt = 0;
+    var syncTimer = null;
+    var flushing = false;
+
+    /* ---------- PIN lock state ---------- */
+    var pinHash = '';              // hash ປັດຈຸບັນ (ຈາກ Sheet ຫຼື cache)
+    var pinVersion = '';           // ເວີຊັນ ເພື່ອຮູ້ວ່າມີການປ່ຽນ PIN
+    var unlocked = false;          // ຜ່ານປະຕູແລ້ວຫຼືບໍ່
+    var pinAttempts = 0;
+    var pinBlockedUntil = 0;
+    var autoLockTimer = null;
+    var setupStage = 'idle';       // idle | new | confirm (ຕອນຕັ້ງ PIN ໃນກ່ອງຕັ້ງຄ່າ)
+
+    /* ---------- element shortcuts ---------- */
+    function $(id) { return document.getElementById(id); }
+
+    /* =====================================================================
+       1. Utilities — escaping, dates, ids, text measurement
+       ===================================================================== */
+    function esc(value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function ymd(d) {
+        var t = d || new Date();
+        var m = String(t.getMonth() + 1);
+        var day = String(t.getDate());
+        if (m.length < 2) { m = '0' + m; }
+        if (day.length < 2) { day = '0' + day; }
+        return t.getFullYear() + '-' + m + '-' + day;
+    }
+
+    function nowLabel() {
+        var t = new Date();
+        var h = String(t.getHours()), mi = String(t.getMinutes());
+        if (h.length < 2) { h = '0' + h; }
+        if (mi.length < 2) { mi = '0' + mi; }
+        return h + ':' + mi;
+    }
+
+    function uid(prefix) {
+        idCounter += 1;
+        return (prefix || 'v') + '_' + Date.now().toString(36) + '_' + idCounter + '_' +
+               Math.floor(Math.random() * 1e6).toString(36);
+    }
+
+    function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+    function toInt(value, fallback) {
+        var n = parseInt(value, 10);
+        return isFinite(n) ? n : (fallback === undefined ? 0 : fallback);
+    }
+
+    function getColorHex(colorName) {
+        var hex = db.colorPalette[colorName];
+        return (typeof hex === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) ? hex : '#F4F4F5';
+    }
+
+    function getLuminance(hex) {
+        var c = String(hex).replace('#', '');
+        if (c.length === 3) { c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2]; }
+        var rgb = parseInt(c, 16);
+        if (!isFinite(rgb)) { return 1; }
+        var r = (rgb >> 16) & 0xff, g = (rgb >> 8) & 0xff, b = rgb & 0xff;
+        return (0.2126 * r / 255) + (0.7152 * g / 255) + (0.0722 * b / 255);
+    }
+
+    function isHex(value) { return typeof value === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim()); }
+
+    function parseList(text) {
+        var seen = {};
+        return String(text || '').split(',').map(function (s) { return s.trim(); })
+            .filter(function (s) {
+                if (!s) { return false; }
+                var key = s.toLowerCase();
+                if (seen[key]) { return false; }
+                seen[key] = true;
+                return true;
+            });
+    }
+
+    function fitText(ctx, text, maxWidth) {
+        var str = String(text);
+        if (ctx.measureText(str).width <= maxWidth) { return str; }
+        while (str.length > 1 && ctx.measureText(str + '…').width > maxWidth) {
+            str = str.slice(0, -1);
+        }
+        return str + '…';
+    }
+
+    /* =====================================================================
+       2. Storage — one stable key + legacy migration + auto-backup
+       ===================================================================== */
+    function readRaw(key) {
+        try { return localStorage.getItem(key); } catch (e) { safeStorage = false; return null; }
+    }
+    function writeRaw(key, value) {
+        try { localStorage.setItem(key, value); return true; }
+        catch (e) {
+            safeStorage = false;
+            if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+                toast('ພື້ນທີ່ເກັບຂໍ້ມູນເຕັມ — ກະລຸນາ Export ໄຟລ໌ສຳຮອງຂໍ້ມູນອອກກ່ອນ', 'err', 8000);
+            } else {
+                toast('ບັນທຶກລົງ browser ບໍ່ໄດ້ (ອາດເປັນໂໝດສ່ວນຕົວ)', 'err', 8000);
+            }
+            return false;
+        }
+    }
+
+    function sanitizeDB(input) {
+        var out = { schema: SCHEMA, products: [], historyLogs: [], colorPalette: clone(DEFAULT_COLORS) };
+        // ເກັບ config (pinHash/lockEnabled) ໄວ້ນຳ ເພື່ອບໍ່ໃຫ້ຫາຍຕອນຂຽນທັບ
+        if (input && input.config && typeof input.config === 'object') {
+            out.config = clone(input.config);
+        }
+        if (input && typeof input.colorPalette === 'object' && input.colorPalette !== null) {
+            Object.keys(input.colorPalette).forEach(function (k) {
+                if (isHex(input.colorPalette[k])) { out.colorPalette[k] = String(input.colorPalette[k]).toUpperCase(); }
+            });
+        }
+        fillProducts_(input, out);
+        fillHistory_(input, out);
+        normalizeOrder(out);
+        return out;
+    }
+
+    function fillProducts_(input, out) {
+        var used = {};
+        var rawProducts = (input && Array.isArray(input.products)) ? input.products : [];
+        rawProducts.forEach(function (p) {
+            if (!p || typeof p !== 'object') { return; }
+            var name = String(p.name === undefined ? '' : p.name).trim();
+            var color = String(p.color === undefined ? '' : p.color).trim();
+            var size = String(p.size === undefined ? '' : p.size).trim();
+            if (!name || !color || !size) { return; }
+            var id = (typeof p.id === 'string' && p.id) ? p.id : uid('v');
+            while (used[id]) { id = uid('v'); }
+            used[id] = true;
+            out.products.push({
+                id: id,
+                name: name,
+                color: color,
+                size: size,
+                quantity: Math.max(0, toInt(p.quantity, 0)),
+                colorIndex: toInt(p.colorIndex, 0),
+                sizeIndex: toInt(p.sizeIndex, 0)
+            });
+            if (!out.colorPalette[color]) { out.colorPalette[color] = DEFAULT_COLORS[color] || '#FFFFFF'; }
+        });
+    }
+
+    function fillHistory_(input, out) {
+        var rawLogs = (input && Array.isArray(input.historyLogs)) ? input.historyLogs : [];
+        rawLogs.forEach(function (l) {
+            if (!l || typeof l !== 'object') { return; }
+            var net = toInt(l.netChange, 0);
+            if (net === 0) { return; }
+            out.historyLogs.push({
+                id: (typeof l.id === 'string' && l.id) ? l.id : uid('h'),
+                date: /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(l.date) ? l.date : ymd(new Date()),
+                productId: (typeof l.productId === 'string') ? l.productId : '',
+                productName: String(l.productName === undefined ? '?' : l.productName),
+                color: String(l.color === undefined ? '' : l.color),
+                size: String(l.size === undefined ? '' : l.size),
+                netChange: net,
+                staff: String(l.staff === undefined ? '' : l.staff).slice(0, 30),
+                timestamp: toInt(l.timestamp, Date.now())
+            });
+        });
+    }
+
+    function isShared() { return !!cfg.url; }
+
+    function loadCfg() {
+        var stored = null;
+        try {
+            var raw = readRaw(CFG_KEY);
+            if (raw) { stored = JSON.parse(raw) || null; }
+        } catch (e) { stored = null; }
+
+        if (BUNDLED.url) {
+            // ໂໝດຝັງຄ່າ: ຜູ້ໃຊ້ບໍ່ຕ້ອງຕັ້ງຫຍັງເລີຍ
+            cfg.url = BUNDLED.url;
+            cfg.secret = BUNDLED.secret;
+            cfg.device = String((stored && stored.device) || '').trim();
+            if (!cfg.device) {
+                cfg.device = 'ເຄື່ອງ-' + deviceTag();
+            }
+            writeRaw(CFG_KEY, JSON.stringify(cfg));
+            writeRaw('TIBKAO_STAFF', cfg.device);
+            writeRaw('TIBKAO_BUNDLED_DEVICE', cfg.device);
+            return;
+        }
+
+        cfg = stored || { url: '', secret: '', device: '' };
+        cfg.url = String(cfg.url || '').trim();
+        cfg.secret = String(cfg.secret || '').trim();
+        cfg.device = String(cfg.device || '').trim();
+    }
+
+    // ລະຫັດສັ້ນປະຈຳເຄື່ອງ ເພື່ອຮູ້ໃນປະຫວັດວ່າເຄື່ອງໃດແກ້
+    function deviceTag() {
+        var existing = readRaw('TIBKAO_BUNDLED_DEVICE');
+        if (existing) {
+            var m = String(existing).match(/-([A-Z0-9]{3,6})$/);
+            if (m) { return m[1]; }
+        }
+        var seed = '';
+        try {
+            seed = [navigator.userAgent, navigator.language, screen.width + 'x' + screen.height,
+                    new Date().getTimezoneOffset(), navigator.hardwareConcurrency || 0].join('|');
+        } catch (e) { seed = String(Math.random()); }
+        var h = 0;
+        for (var i = 0; i < seed.length; i++) { h = ((h << 5) - h + seed.charCodeAt(i)) | 0; }
+        var rnd = Math.abs(h).toString(36).toUpperCase().slice(0, 4);
+        while (rnd.length < 4) { rnd += 'X'; }
+        return rnd;
+    }
+
+    function saveCfg() {
+        writeRaw(CFG_KEY, JSON.stringify(cfg));
+        writeRaw('TIBKAO_STAFF', cfg.device || '');
+    }
+
+    function loadQueue() {
+        try {
+            var raw = readRaw(QUEUE_KEY);
+            pending = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(pending)) { pending = []; }
+        } catch (e) { pending = []; }
+    }
+
+    function saveQueue() {
+        writeRaw(QUEUE_KEY, JSON.stringify(pending));
+        renderSyncBar();
+    }
+
+    function sanitizeDBlegacyRemoved() {
+        var out = { schema: SCHEMA, products: [], historyLogs: [], colorPalette: clone(DEFAULT_COLORS) };
+
+        if (input && typeof input.colorPalette === 'object' && input.colorPalette !== null) {
+            Object.keys(input.colorPalette).forEach(function (k) {
+                if (isHex(input.colorPalette[k])) { out.colorPalette[k] = String(input.colorPalette[k]).toUpperCase(); }
+            });
+        }
+
+        var used = {};
+        var rawProducts = (input && Array.isArray(input.products)) ? input.products : [];
+        rawProducts.forEach(function (p) {
+            if (!p || typeof p !== 'object') { return; }
+            var name = String(p.name === undefined ? '' : p.name).trim();
+            var color = String(p.color === undefined ? '' : p.color).trim();
+            var size = String(p.size === undefined ? '' : p.size).trim();
+            if (!name || !color || !size) { return; }
+            var id = (typeof p.id === 'string' && p.id) ? p.id : uid('v');
+            while (used[id]) { id = uid('v'); }
+            used[id] = true;
+            out.products.push({
+                id: id,
+                name: name,
+                color: color,
+                size: size,
+                quantity: Math.max(0, toInt(p.quantity, 0)),
+                colorIndex: toInt(p.colorIndex, 0),
+                sizeIndex: toInt(p.sizeIndex, 0)
+            });
+            if (!out.colorPalette[color]) { out.colorPalette[color] = DEFAULT_COLORS[color] || '#FFFFFF'; }
+        });
+
+        var rawLogs = (input && Array.isArray(input.historyLogs)) ? input.historyLogs : [];
+        rawLogs.forEach(function (l) {
+            if (!l || typeof l !== 'object') { return; }
+            var net = toInt(l.netChange, 0);
+            if (net === 0) { return; }
+            out.historyLogs.push({
+                id: (typeof l.id === 'string' && l.id) ? l.id : uid('h'),
+                date: /^\d{4}-\d{2}-\d{2}$/.test(l.date) ? l.date : ymd(new Date()),
+                productId: (typeof l.productId === 'string') ? l.productId : '',
+                productName: String(l.productName === undefined ? '?' : l.productName),
+                color: String(l.color === undefined ? '' : l.color),
+                size: String(l.size === undefined ? '' : l.size),
+                netChange: net,
+                staff: String(l.staff === undefined ? '' : l.staff).slice(0, 30),
+                timestamp: toInt(l.timestamp, Date.now())
+            });
+        });
+
+        // fill missing colorIndex/sizeIndex deterministically
+        normalizeOrder(out);
+        return out;
+    }
+
+    function normalizeOrder(target) {
+        var byName = {};
+        target.products.forEach(function (p) {
+            if (!byName[p.name]) { byName[p.name] = []; }
+            byName[p.name].push(p);
+        });
+        Object.keys(byName).forEach(function (name) {
+            var items = byName[name];
+            var colors = [], seenColor = {};
+            items.forEach(function (p) { if (!seenColor[p.color]) { seenColor[p.color] = true; colors.push(p.color); } });
+            colors.sort(function (a, b) {
+                return firstIndexOf(items, 'color', a) - firstIndexOf(items, 'color', b);
+            });
+            colors.forEach(function (c, i) {
+                items.forEach(function (p) { if (p.color === c) { p.colorIndex = i; } });
+            });
+            colors.forEach(function (c) {
+                var sizes = items.filter(function (p) { return p.color === c; });
+                sizes.forEach(function (p, i) { p.sizeIndex = i; });
+            });
+        });
+    }
+
+    // stable index = lowest stored index, falling back to array position
+    function firstIndexOf(items, field, value) {
+        var best = Infinity, pos = Infinity;
+        items.forEach(function (p, i) {
+            if (p[field] === value) {
+                var idx = toInt(p[field + 'Index'], i);
+                if (idx < best) { best = idx; }
+                if (i < pos) { pos = i; }
+            }
+        });
+        return best === Infinity ? pos : best;
+    }
+
+    function loadData() {
+        var raw = readRaw(DB_KEY);
+        if (raw) {
+            try {
+                var parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.products)) {
+                    db = sanitizeDB(parsed);
+                    return { migrated: false, found: true };
+                }
+            } catch (e) { /* corrupt main record — fall through to legacy/backup */ }
+        }
+
+        // 1) migrate from newest legacy group that actually holds data
+        for (var i = 0; i < LEGACY_GROUPS.length; i++) {
+            var g = LEGACY_GROUPS[i];
+            var pRaw = readRaw(g.products);
+            if (!pRaw) { continue; }
+            var products;
+            try { products = JSON.parse(pRaw); } catch (e) { continue; }
+            if (!Array.isArray(products) || products.length === 0) { continue; }
+
+            var history = [], palette = null;
+            try { history = JSON.parse(readRaw(g.history) || '[]'); } catch (e) { history = []; }
+            try { palette = JSON.parse(readRaw(g.palette) || 'null'); } catch (e) { palette = null; }
+
+            db = sanitizeDB({ products: products, historyLogs: history, colorPalette: palette || {} });
+            saveData();
+            return { migrated: true, found: true, from: g.products };
+        }
+
+        // 2) fall back to auto-backup
+        var backupRaw = readRaw(BACKUP_KEY);
+        if (backupRaw) {
+            try {
+                var b = JSON.parse(backupRaw);
+                if (b && b.db && Array.isArray(b.db.products) && b.db.products.length) {
+                    db = sanitizeDB(b.db);
+                    return { migrated: true, found: true, from: 'auto-backup', backupAt: b.at };
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        db = sanitizeDB(null);
+        return { migrated: false, found: false };
+    }
+
+    function saveData(immediate) {
+        if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+        var payload = JSON.stringify(db);
+        var ok = writeRaw(DB_KEY, payload);
+        // keep a rolling auto-backup (only when the write succeeded)
+        if (ok) {
+            writeRaw(BACKUP_KEY, JSON.stringify({ at: Date.now(), db: db }));
+        }
+        setSaveState(ok ? 'save' : 'error');
+        return ok;
+    }
+
+    function scheduleSave() {
+        setSaveState('saving');
+        if (saveTimer) { clearTimeout(saveTimer); }
+        saveTimer = setTimeout(function () { saveData(); }, 250);
+    }
+
+    function setSaveState(kind) {
+        var el = $('stat-save');
+        if (!el) { return; }
+        var stamp = nowLabel();
+        if (kind === 'saving') { el.textContent = 'ກຳລັງບັນທຶກ…'; el.style.color = '#B7791F'; }
+        else if (kind === 'error') { el.textContent = 'ບັນທຶກບໍ່ໄດ້!'; el.style.color = 'var(--brand-red)'; }
+        else { el.textContent = 'ບັນທຶກແລ້ວ ' + stamp; el.style.color = 'var(--brand-green)'; }
+    }
+
+    function commit(label) {
+        saveData();
+        if (label) { toast(label, 'ok'); }
+        renderAll();
+    }
+
+    /* =====================================================================
+       3. Undo
+       ===================================================================== */
+    function pushUndo(label) {
+        undoStack.push({ snapshot: clone(db), label: label });
+        if (undoStack.length > UNDO_LIMIT) { undoStack.shift(); }
+        var btn = $('undo-btn');
+        if (btn) { btn.disabled = undoStack.length === 0; }
+    }
+
+    function undo() {
+        if (!undoStack.length) { toast('ບໍ່ມີຫຍັງໃຫ້ຍົກເລິກ', 'info'); return; }
+        var last = undoStack.pop();
+        var before = db;
+        db = sanitizeDB(last.snapshot);
+        dbRevision += 1;
+        if (isShared()) {
+            var beforeIds = before.products.map(function (p) { return p.id; });
+            var afterIds = db.products.map(function (p) { return p.id; });
+            var restored = db.products.filter(function (p) { return beforeIds.indexOf(p.id) === -1; });
+            var removed = beforeIds.filter(function (id) { return afterIds.indexOf(id) === -1; });
+            var ops = { products: [] };
+            if (restored.length) { ops.products.push({ type: 'add', products: restored }); }
+            if (removed.length) { ops.products.push({ type: 'delete', ids: removed }); }
+            db.products.forEach(function (p) {
+                ops.products.push({ type: 'set', id: p.id, fields: { quantity: p.quantity, colorIndex: p.colorIndex, sizeIndex: p.sizeIndex } });
+            });
+            if (db.historyLogs.length !== before.historyLogs.length) {
+                ops.history = [{ type: 'merge', rows: db.historyLogs }];
+            }
+            queuePatch([ops]);
+        }
+        saveData();
+        renderAll();
+        var btn = $('undo-btn');
+        if (btn) { btn.disabled = undoStack.length === 0; }
+        toast('ຍົກເລິກແລ້ວ: ' + last.label, 'info');
+    }
+
+    /* =====================================================================
+       4. Toast + confirm dialog
+       ===================================================================== */
+    function toast(msg, kind, ms) {
+        var host = $('toast-host');
+        if (!host) { return; }
+        var el = document.createElement('div');
+        el.className = 'toast ' + (kind || 'info');
+        el.textContent = msg;
+        host.appendChild(el);
+        setTimeout(function () {
+            if (el.parentNode) { el.parentNode.removeChild(el); }
+        }, ms || 2600);
+    }
+
+    /* ---------------------------------------------------------------------
+       Confirm dialog.
+       Exactly one confirmation may be alive at a time, and the promise is
+       handed out with a sequence stamp. Every caller checks that its own
+       stamp is still the current one before touching data — without this,
+       two requests in flight can swap answers and delete the wrong variant
+       when the user presses "cancel".
+       --------------------------------------------------------------------- */
+    var confirmActive = null;
+    var confirmSeq = 0;
+    var dbRevision = 0;
+
+    function askConfirm(opts) {
+        var opts2 = opts || {};
+        confirmSeq += 1;
+        var seq = confirmSeq;
+
+        // a second dialog cannot be shown while one is open: refuse it outright
+        if (confirmActive) {
+            toast('ກະລຸນາຕອບກ່ອງຢືນຢັນທີ່ເປີດຢູ່ກ່ອນ', 'err', 3000);
+            return Promise.resolve({ confirmed: false, extra: false, refused: true, seq: seq });
+        }
+
+        $('confirm-title').textContent = opts2.title || 'ຢືນຢັນ';
+        $('confirm-msg').innerHTML = opts2.message || '';
+
+        var extraWrap = $('confirm-extra-wrap');
+        var extra = $('confirm-extra');
+        if (opts2.extraLabel) {
+            extraWrap.style.display = 'flex';
+            $('confirm-extra-label').textContent = opts2.extraLabel;
+            extra.checked = !!opts2.extraDefault;
+        } else {
+            extraWrap.style.display = 'none';
+            extra.checked = false;
+        }
+        $('confirm-ok').textContent = opts2.okText || 'ຢືນຢັນ';
+
+        var resolveFn = null;
+        var promise = new Promise(function (resolve) { resolveFn = resolve; });
+        confirmActive = { opts: opts2, resolve: resolveFn, seq: seq };
+        openConfirmModal();
+        return promise.then(function (result) {
+            // stale answer (the dialog was replaced or already settled): ignore
+            if (!result || result.seq !== seq || result.confirmed !== true) {
+                return { confirmed: false, extra: false, stale: !!result };
+            }
+            return result;
+        });
+    }
+
+    // settle the active dialog exactly once, stamping the answer with its seq
+    function finishConfirm(confirmed) {
+        var job = confirmActive;
+        if (!job) { return; }
+        confirmActive = null;
+        var el = $('confirmModal');
+        if (el) { el.classList.remove('active'); }
+        job.resolve(confirmed
+            ? { confirmed: true, extra: $('confirm-extra').checked, seq: job.seq }
+            : { confirmed: false, extra: false, seq: job.seq });
+    }
+
+    function resolveConfirm(confirmed) {
+        if (!confirmActive) { return; }   // stray click on an already-settled dialog
+        finishConfirm(confirmed === true || (confirmed && confirmed.confirmed === true));
+    }
+
+    /* =====================================================================
+       Shared mode — Google Sheet ຜ່ານ Apps Script
+       ຫຼັກການ: ແກ້ໃນໜ້າຈໍທັນທີ (optimistic) ແລ້ວສົ່ງຄຳສັ່ງໄປ server.
+       ຖ້າເນັດລົ້ມ ຄຳສັ່ງຈະຖືກເກັບໄວ້ໃນຄິວ ແລະ ສົ່ງອອກເອງເມື່ອເນັດກັບມາ.
+       ===================================================================== */
+    function apiCall(params) {
+        var body = [];
+        params.secret = cfg.secret;
+        Object.keys(params).forEach(function (k) {
+            if (params[k] === undefined || params[k] === null) { return; }
+            body.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k])));
+        });
+        return fetch(cfg.url, {
+            method: 'POST',
+            // ຕ້ອງເປັນ form-urlencoded ເພື່ອໃຫ້ Apps Script ອ່ານ e.parameter ໄດ້
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: body.join('&'),
+            redirect: 'follow'
+        }).then(function (res) {
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            return res.json();
+        }).then(function (json) {
+            if (!json || json.ok !== true) {
+                throw new Error((json && json.error) ? json.error : 'bad response');
+            }
+            return json;
+        });
+    }
+
+    function setSyncState(state, note) {
+        syncState = state;
+        renderSyncBar(note);
+    }
+
+    function renderSyncBar(note) {
+        var bar = $('syncbar');
+        var text = $('sync-text');
+        var pendingEl = $('sync-pending');
+        var summary = $('conn-summary');
+        if (!bar || !text) { return; }
+        bar.className = 'syncbar' + (syncState === 'online' ? ' online' : (syncState === 'offline' ? ' offline' : (syncState === 'error' ? ' error' : '')));
+
+        var label;
+        if (syncState === 'off') { label = 'ໂໝດ offline — ຂໍ້ມູນຢູ່ໃນເຄື່ອງນີ້ຢ່າງດຽວ'; }
+        else if (syncState === 'connecting') { label = 'ກຳລັງເຊື່ອມຕໍ່ຖານຂໍ້ມູນກາງ...'; }
+        else if (syncState === 'online') { label = 'ຖານຂໍ້ມູນກາງ: ອອນລາຍ' + (lastSyncAt ? ' · ດຶງຫຼ້າສຸດ ' + timeLabel(lastSyncAt) : ''); }
+        else if (syncState === 'offline') { label = 'ເນັດຂາດ — ຈະສົ່ງຂໍ້ມູນອັດຕະໂນມັດເມື່ອກັບມາ'; }
+        else { label = 'ເຊື່ອມຕໍ່ບໍ່ໄດ້: ' + (note || 'ກວດ URL/ລະຫັດລັບ'); }
+        text.textContent = label;
+
+        if (pendingEl) {
+            if (pending.length) { pendingEl.style.display = ''; pendingEl.textContent = pending.length + ' ລໍຖ້າສົ່ງ'; }
+            else { pendingEl.style.display = 'none'; }
+        }
+        if (summary) {
+            if (!isShared()) {
+                summary.innerHTML = 'ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່ — ຂໍ້ມູນເກັບໃນເຄື່ອງນີ້ຢ່າງດຽວ';
+            } else {
+                summary.innerHTML = 'ເຄື່ອງນີ້: <b>' + esc(cfg.device || '-') + '</b><br>' +
+                    'ສະຖານະ: <b>' + esc(syncState) + '</b><br>' +
+                    'ລໍຖ້າສົ່ງ: <b>' + pending.length + '</b>';
+            }
+        }
+    }
+
+    function timeLabel(ts) {
+        var d = new Date(ts);
+        var h = String(d.getHours()), m = String(d.getMinutes());
+        if (h.length < 2) { h = '0' + h; }
+        if (m.length < 2) { m = '0' + m; }
+        return h + ':' + m;
+    }
+
+    /* -------- ດຶງຂໍ້ມູນທັງໝົດຈາກ server -------- */
+    function syncNow(silent) {
+        if (!isShared()) { setSyncState('off'); return Promise.resolve(false); }
+        if (syncState !== 'online') { setSyncState('connecting'); }
+        return apiCall({ op: 'state' }).then(function (json) {
+            serverDate = json.today || '';
+            var pinChanged = applyServerConfig(json.state || {});
+            db = sanitizeDB(json.state || {});
+            if (db.products.length) { saveData(); }
+            lastSyncAt = Date.now();
+            setSyncState('online');
+            renderAll();
+            if (pinChanged) { lockApp('ມີການປ່ຽນ PIN — ກະລຸນາໃສ່ PIN ໃໝ່'); }
+            if (!silent) { toast('ດຶງຂໍ້ມູນລ່າສຸດແລ້ວ (' + db.products.length + ' ລາຍການ)', 'ok'); }
+            return true;
+        }).catch(function (err) {
+            setSyncState(navigator.onLine === false ? 'offline' : 'error', String(err && err.message || err));
+            return false;
+        });
+    }
+
+    /* -------- ເອົາຜົນຈາກ server ມາໃສ່ຂໍ້ມູນໃນໜ້າຈໍ -------- */
+    function applyServerConfig(state) {
+        var c = (state && state.config) || null;
+        if (!c) { return false; }
+        var serverHash = String(c.pinHash || '');
+        var serverVersion = String(c.pinVersion || '');
+        var changed = false;
+
+        if (serverVersion !== pinVersion || serverHash !== pinHash) {
+            pinVersion = serverVersion;
+            pinHash = serverHash;
+            var cache = pinCache();
+            // ຖ້າ hash ປ່ຽນ (ຜູ້ດູແລປ່ຽນ PIN) ໃຫ້ລັອກໃໝ່ ແລະ ລຶບ cache ເກົ່າ
+            if (cache.version !== serverVersion) {
+                writeRaw(PIN_KEY, JSON.stringify({ sha: serverHash, fnv: cache.fnv || '', version: serverVersion }));
+                if (serverHash) { changed = true; }
+            } else if (cache.sha !== serverHash) {
+                writeRaw(PIN_KEY, JSON.stringify({ sha: serverHash, fnv: cache.fnv || '', version: serverVersion }));
+            }
+        }
+        ensurePinState();
+        return changed;
+    }
+
+    function applyServerResult(res) {
+        if (!res) { return; }
+        if (res.today) { serverDate = res.today; }
+        var groups = res.items && res.items.length ? res.items : [res];
+        groups.forEach(function (g) {
+            if (!g) { return; }
+            if (g.products) {
+                var added = g.products.added || {};
+                Object.keys(added).forEach(function (id) {
+                    var row = added[id];
+                    if (!findVariant(id)) { db.products.push(row); }
+                    else { mergeProduct(id, row); }
+                });
+                var patch = g.products.patch || {};
+                Object.keys(patch).forEach(function (id) {
+                    var p = patch[id];
+                    var local = findVariant(id);
+                    if (p === null) {
+                        db.products = db.products.filter(function (x) { return x.id !== id; });
+                    } else if (local) {
+                        Object.keys(p).forEach(function (k) { if (k !== 'updatedAt') { local[k] = p[k]; } });
+                    }
+                });
+            }
+            if (g.history && g.history.rows) {
+                g.history.rows.forEach(function (row) {
+                    if (!db.historyLogs.some(function (l) { return l.id === row.id; })) { db.historyLogs.push(row); }
+                });
+            }
+        });
+    }
+
+    function mergeProduct(id, row) {
+        var local = findVariant(id);
+        if (!local) { return; }
+        ['name', 'color', 'size', 'quantity', 'colorIndex', 'sizeIndex'].forEach(function (k) {
+            if (row[k] !== undefined) { local[k] = row[k]; }
+        });
+    }
+
+    function workDate() { return serverDate || ymd(new Date()); }
+
+    function staffName() { return cfg.device || ($('staff-input') && $('staff-input').value.trim()) || ''; }
+
+    /* -------- ຄິວ ຄຳສັ່ງທີ່ຈະສົ່ງ -------- */
+    function queuePatch(ops) {
+        if (!isShared() || !ops || !ops.length) { return; }
+        pending.push(ops);
+        // ຈຳກັດຄວາມຍາວຄິວ ບໍ່ໃຫ້ບວມ
+        if (pending.length > 500) { pending = pending.slice(-500); }
+        saveQueue();
+        flushQueue();
+    }
+
+    function flushQueue() {
+        if (!isShared()) { return Promise.resolve(false); }
+        if (flushing) { return Promise.resolve(false); }
+        if (!pending.length) { return Promise.resolve(true); }
+        if (navigator.onLine === false) { setSyncState('offline'); return Promise.resolve(false); }
+
+        flushing = true;
+        // pending ເກັບເປັນ "ຊຸດ ops ຕໍ່ 1 ຄຳສັ່ງ"; ສົ່ງລວມກັນເປັນ ops ຊັ້ນດຽວ
+        var batch = [];
+        pending.slice(0, 60).forEach(function (group) {
+            (group || []).forEach(function (op) { batch.push(op); });
+        });
+        var consumed = Math.min(pending.length, 60);
+        return apiCall({
+            op: 'patch',
+            data: JSON.stringify({ items: batch, workDate: workDate() })
+        }).then(function (json) {
+            pending = pending.slice(consumed);
+            saveQueue();
+            applyServerResult(json);
+            lastSyncAt = Date.now();
+            flushing = false;
+            setSyncState('online');
+            saveData();
+            renderAll();
+            return flushQueue();
+        }).catch(function (err) {
+            flushing = false;
+            // ຄຳສັ່ງບໍ່ຖືກລຶບ — ຈະລອງສົ່ງອີກເມື່ອເນັດກັບມາ
+            setSyncState(navigator.onLine === false ? 'offline' : 'error', String(err && err.message || err));
+            return false;
+        });
+    }
+
+    /* -------- ຄຳສັ່ງຕ່າງໆ -------- */
+    function patchAdd(rows) {
+        queuePatch([{ products: [{ type: 'add', products: rows }] }]);
+    }
+    function patchDelta(id, delta) {
+        queuePatch([{ products: [{ type: 'delta', ids: [id], delta: delta, staff: staffName() }] }]);
+    }
+    function patchDelete(ids, withHistory, historyIds) {
+        var item = { products: [{ type: 'delete', ids: ids }] };
+        if (withHistory && historyIds && historyIds.length) {
+            item.history = [{ type: 'delete', ids: historyIds }];
+        }
+        queuePatch([item]);
+    }
+    function patchSetFields(id, fields) {
+        queuePatch([{ products: [{ type: 'set', id: id, fields: fields }] }]);
+    }
+    function patchOrder(order) {
+        queuePatch([{ products: [{ type: 'order', order: order }] }]);
+    }
+    function patchHistoryDelete(ids) {
+        queuePatch([{ history: [{ type: 'delete', ids: ids }] }]);
+    }
+    function patchHistoryClear(ids) {
+        queuePatch([{ history: [{ type: 'delete', ids: ids }] }]);
+    }
+    function patchPalette(entries) {
+        queuePatch([{ palette: entries }]);
+    }
+    function patchReplaceAll(state) {
+        queuePatch([{
+            products: [
+                { type: 'delete', ids: db.products.map(function (p) { return p.id; }) },
+                { type: 'add', products: state.products }
+            ],
+            history: [
+                { type: 'clear' },
+                { type: 'merge', rows: state.historyLogs }
+            ],
+            palette: Object.keys(state.colorPalette).map(function (c) {
+                return { colorName: c, hex: state.colorPalette[c] };
+            })
+        }]);
+    }
+
+    function startSync() {
+        loadCfg();
+        loadQueue();
+        var deviceInput = $('cfg-device');
+        var urlInput = $('cfg-url');
+        var secretInput = $('cfg-secret');
+        if (urlInput) { urlInput.value = cfg.url; }
+        if (secretInput) { secretInput.value = cfg.secret; }
+        if (deviceInput) { deviceInput.value = cfg.device; }
+
+        var staffInput = $('staff-input');
+        if (staffInput && cfg.device) { staffInput.value = cfg.device; }
+
+        if (!isShared()) {
+            setSyncState('off');
+            return;
+        }
+        syncNow(true).then(function () { flushQueue(); });
+        if (syncTimer) { clearInterval(syncTimer); }
+        syncTimer = setInterval(function () {
+            if (document.visibilityState === 'hidden') { return; }
+            if (pinHash && !unlocked) { return; }   // ຢ່າດຶງຂໍ້ມູນຕອນຍັງລັອກຢູ່
+            if (pending.length) { flushQueue(); }
+            else { syncNow(true); }
+        }, POLL_MS);
+    }
+
+    function saveSetup() {
+        cfg.url = ($('cfg-url').value || '').trim();
+        cfg.secret = ($('cfg-secret').value || '').trim();
+        cfg.device = ($('cfg-device').value || '').trim();
+        if (cfg.url && !/^https:\/\//.test(cfg.url)) {
+            $('setup-status').textContent = 'URL ຕ້ອງເລີ່ມດ້ວຍ https:// ແລະ ລົງທ້າຍດ້ວຍ /exec';
+            return;
+        }
+        saveCfg();
+        closeModal('setupModal');
+        toast('ບັນທຶກການຕັ້ງຄ່າແລ້ວ', 'ok');
+        startSync();
+    }
+
+    function testConn() {
+        var url = ($('cfg-url').value || '').trim();
+        var secret = ($('cfg-secret').value || '').trim();
+        var status = $('setup-status');
+        if (!url) { status.textContent = 'ຍັງບໍ່ໄດ້ໃສ່ URL'; status.style.color = 'var(--brand-red)'; return; }
+        status.textContent = 'ກຳລັງທົດສອບ...';
+        status.style.color = 'var(--brand-dark-gray)';
+
+        var savedUrl = cfg.url, savedSecret = cfg.secret;
+        cfg.url = url; cfg.secret = secret;
+        apiCall({ op: 'state' }).then(function (json) {
+            var n = (json.state && json.state.products) ? json.state.products.length : 0;
+            status.textContent = '✅ ເຊື່ອມຕໍ່ໄດ້ · ພົບ ' + n + ' ລາຍການ ໃນ Sheet';
+            status.style.color = 'var(--brand-green)';
+            cfg.url = savedUrl; cfg.secret = savedSecret;
+        }).catch(function (err) {
+            status.textContent = '❌ ເຊື່ອມຕໍ່ບໍ່ໄດ້: ' + String(err && err.message || err) +
+                ' (ກວດວ່າ deploy ເປັນ Web app + Who has access = Anyone ແລ້ວບໍ່)';
+            status.style.color = 'var(--brand-red)';
+            cfg.url = savedUrl; cfg.secret = savedSecret;
+        });
+    }
+
+    /* =====================================================================
+       PIN lock — ປະຕູກັ້ນຄົນທີ່ມີລິ້ງແຕ່ບໍ່ຄວນເຫັນຂໍ້ມູນ.
+       ຫຼັກການ: ເກັບສະເພາະ hash ຂອງ PIN (ບໍ່ເກັບ PIN ຈິງ) ໄວ້ທີ່ Google Sheet
+       ຊີດ Config ຈຶ່ງທຸກເຄື່ອງໃຊ້ PIN ດຽວກັນ ແລະ ປ່ຽນທີ່ດຽວມີຜົນໝົດ.
+       ===================================================================== */
+    function bufToHex(buf) {
+        var bytes = new Uint8Array(buf);
+        var out = '';
+        for (var i = 0; i < bytes.length; i++) {
+            var h = bytes[i].toString(16);
+            out += h.length === 1 ? '0' + h : h;
+        }
+        return out;
+    }
+
+    // FNV-1a 64 ບິດ (ສຳຮອງ) — ໃຊ້ເມື່ອບໍ່ມີ crypto.subtle (ເຊັ່ນ ເປີດຈາກ file://)
+    function fnv64(text) {
+        var h1 = 0x811c9dc5, h2 = 0x811c9dc5;
+        for (var i = 0; i < text.length; i++) {
+            var c = text.charCodeAt(i);
+            h1 ^= c; h1 = (h1 * 0x01000193) >>> 0;
+            h2 ^= (c + 7); h2 = (h2 * 0x01000193) >>> 0;
+        }
+        return 'fnv' + h1.toString(16) + h2.toString(16);
+    }
+
+    // ໃຊ້ SHA-256 ຖ້າມີ, ບໍ່ດັ່ງນັ້ນ FNV. ຜົນຕ້ອງຕົງກັນທຸກເຄື່ອງ —
+    // ດັ່ງນັ້ນຕອນຕັ້ງ PIN ຈະເກັບທັງສອງແບບໄວ້ ແລ້ວທຽບອັນໃດອັນໜຶ່ງ.
+    function pinHashes(pin) {
+        var text = PIN_SALT + pin;
+        var out = { fnv: fnv64(text), sha: '' };
+        if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+            var data = new TextEncoder().encode(text);
+            out.promise = window.crypto.subtle.digest('SHA-256', data).then(function (buf) {
+                out.sha = 'sha' + bufToHex(buf);
+                return out;
+            });
+            return out;
+        }
+        out.promise = Promise.resolve(out);
+        return out;
+    }
+
+    function pinMatches(pin, stored) {
+        if (!stored) { return Promise.resolve(false); }
+        return pinHashes(pin).promise.then(function (h) {
+            // ຮອງຮັບທັງແບບ sha (ຕອນຢູ່ https) ແລະ fnv (ຕອນເປີດໄຟລ໌)
+            return (!!h.sha && h.sha === stored.sha) || (!!h.fnv && h.fnv === stored.fnv);
+        });
+    }
+
+    function pinCache() {
+        try { return JSON.parse(readRaw(PIN_KEY) || 'null') || {}; }
+        catch (e) { return {}; }
+    }
+
+    function ensurePinState() {
+        var cache = pinCache();
+        if (!pinHash && cache.sha && cache.version === pinVersion) {
+            pinHash = cache.sha;   // ໃຊ້ຄ່າທີ່ເຄື່ອງນີ້ເຄີຍຢືນຢັນ
+        }
+        var lockBtn = $('lock-btn');
+        if (lockBtn) { lockBtn.style.display = pinHash ? '' : 'none'; }
+        var removeBtn = $('pin-remove-btn');
+        if (removeBtn) { removeBtn.style.display = pinHash ? '' : 'none'; }
+        var st = $('pin-status');
+        if (st) {
+            st.innerHTML = pinHash
+                ? '✅ ເປີດໃຊ້ຢູ່ · ລັອກເອງຫຼັງບໍ່ໃຊ້ 10 ນາທີ'
+                : 'ຍັງບໍ່ໄດ້ຕັ້ງ PIN — ໃຜມີລິ້ງກໍ່ເປີດເຫັນໄດ້';
+        }
+    }
+
+    function lockApp(reason) {
+        if (!pinHash) { return; }
+        unlocked = false;
+        stopAutoLockWatch();
+        if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+        var gate = $('pinGate');
+        gate.classList.add('active');
+        document.body.classList.add('locked');
+        var input = $('pin-input');
+        input.value = '';
+        $('pin-msg').textContent = reason || '';
+        $('pin-msg').className = 'pin-msg';
+        setTimeout(function () { try { input.focus(); } catch (e) { /* noop */ } }, 60);
+    }
+
+    function unlockApp() {
+        unlocked = true;
+        var gate = $('pinGate');
+        if (gate) { gate.classList.remove('active'); }
+        document.body.classList.remove('locked');
+        renderAll();
+        if (isShared()) {
+            startSync();
+        }
+        resetAutoLockWatch();
+        toast('ຍິນດີຕ້ອນຮັບ 👋', 'ok', 1800);
+    }
+
+    function submitPin(e) {
+        if (e && e.preventDefault) { e.preventDefault(); }
+        var msg = $('pin-msg');
+        var now = Date.now();
+
+        if (now < pinBlockedUntil) {
+            var secs = Math.ceil((pinBlockedUntil - now) / 1000);
+            msg.textContent = 'ລອງຜິດຫຼາຍເກີນໄປ — ລໍຖ້າ ' + secs + ' ວິນາທີ';
+            msg.className = 'pin-msg err';
+            return;
+        }
+
+        var pin = ($('pin-input').value || '').trim();
+        if (!/^\d{4,12}$/.test(pin)) {
+            msg.textContent = 'PIN ຕ້ອງເປັນໂຕເລກ 4–12 ຫຼັກ';
+            msg.className = 'pin-msg err';
+            return;
+        }
+
+        pinAttempts += 1;
+        var attemptsNow = pinAttempts;
+        if (attemptsNow >= 5) {
+            // ບັນທຶກການລໍຖ້າແບບ synchronous ຈຶ່ງກົດລອງລົດຖີໄວໆບໍ່ໄດ້
+            pinBlockedUntil = Date.now() + 30000;
+            pinAttempts = 0;
+            msg.textContent = 'ລອງຜິດ 5 ຄັ້ງ — ລໍຖ້າ 30 ວິນາທີ';
+            msg.className = 'pin-msg err';
+            $('pin-input').value = '';
+            setTimeout(function () {
+                $('pin-msg').textContent = 'ລອງໃໝ່ໄດ້ແລ້ວ';
+                $('pin-msg').className = 'pin-msg';
+            }, 30000);
+            return;
+        }
+
+        var cache = pinCache();
+        pinMatches(pin, { sha: pinHash || cache.sha, fnv: cache.fnv }).then(function (ok) {
+            if (ok) {
+                pinAttempts = 0;
+                try { $('pin-input').value = ''; } catch (err) { /* noop */ }
+                unlockApp();
+                return;
+            }
+            msg.textContent = 'PIN ບໍ່ຖືກ (' + attemptsNow + '/5)';
+            msg.className = 'pin-msg err';
+            $('pin-input').value = '';
+            try { $('pin-input').focus(); } catch (err) { /* noop */ }
+        });
+    }
+
+    /* -------- ຕັ້ງ / ປ່ຽນ / ລຶບ PIN (ເຮັດໃນກ່ອງຕັ້ງຄ່າ) -------- */
+    function startPinSetup() {
+        var st = $('pin-status');
+        // ຖ້າມີ PIN ຢູ່ແລ້ວ ຕ້ອງຖາມກ່ອນ ເພື່ອກັນກົດພິດ
+        if (pinHash && setupStage !== 'ready') {
+            askConfirm({
+                title: 'ປ່ຽນ PIN',
+                message: 'ປັດຈຸບັນມີ PIN ຢູ່ແລ້ວ. ຕ້ອງການປ່ຽນເປັນ PIN ໃໝ່ບໍ່?<br><br>' +
+                         'ຫຼັງປ່ຽນແລ້ວ ທຸກເຄື່ອງທີ່ຕໍ່ Sheet ດຽວກັນຈະຕ້ອງໃສ່ PIN ໃໝ່.',
+                okText: 'ປ່ຽນ PIN'
+            }).then(function (res) {
+                if (res && res.confirmed === true) { showPinInputs(); }
+            });
+            return;
+        }
+        if (setupStage === 'ready') { commitPinSetup(); return; }
+        showPinInputs();
+    }
+
+    function showPinInputs() {
+        var st = $('pin-status');
+        st.innerHTML = '<input type="password" id="pin-new" class="field field-sm" inputmode="numeric" ' +
+            'maxlength="12" placeholder="PIN ໃໝ່ (4–12 ຫຼັກ)" style="margin-bottom:.5rem;">' +
+            '<input type="password" id="pin-new2" class="field field-sm" inputmode="numeric" ' +
+            'maxlength="12" placeholder="ພິມ PIN ອີກເທື່ອເພື່ອຢືນຢັນ">' +
+            '<div class="hint" style="margin-top:.4rem;">ພິມຄົບແລ້ວກົດປຸ່ມ "ຕັ້ງ / ປ່ຽນ PIN" ອີກເທື່ອໜຶ່ງ</div>';
+        setupStage = 'ready';
+        var f = $('pin-new');
+        if (f && f.focus) { f.focus(); }
+    }
+
+    function commitPinSetup() {
+        var a = ($('pin-new') && $('pin-new').value || '').trim();
+        var b = ($('pin-new2') && $('pin-new2').value || '').trim();
+        if (!/^\d{4,12}$/.test(a)) { toast('PIN ຕ້ອງເປັນໂຕເລກ 4–12 ຫຼັກ', 'err'); return; }
+        if (a !== b) { toast('ສອງຊ່ອງບໍ່ຄືກັນ — ລອງໃໝ່', 'err'); return; }
+
+        pinHashes(a).promise.then(function (h) {
+            if (!h.sha && !h.fnv) { toast('ອຸປະກອນນີ້ສ້າງ hash ບໍ່ໄດ້', 'err'); return; }
+            pinHash = h.sha || h.fnv;
+            pinVersion = String(Date.now());
+            writeRaw(PIN_KEY, JSON.stringify({ sha: pinHash, fnv: h.fnv, version: pinVersion }));
+            setupStage = 'idle';
+            ensurePinState();
+
+            if (isShared()) {
+                queuePatch([{ config: { pinHash: pinHash, lockEnabled: true, pinVersion: pinVersion } }]);
+                flushQueue();
+                toast('ຕັ້ງ PIN ແລ້ວ — ຈະໃຊ້ກັບທຸກເຄື່ອງທີ່ຕໍ່ Sheet ດຽວກັນ', 'ok', 4500);
+            } else {
+                toast('ຕັ້ງ PIN ແລ້ວ (ເກັບໃນເຄື່ອງນີ້)', 'ok');
+            }
+        });
+    }
+
+    function removePin() {
+        askConfirm({
+            title: 'ລຶບ PIN',
+            message: 'ລຶບ PIN ອອກ? ຫຼັງຈາກນີ້ ໃຜມີລິ້ງກໍ່ເປີດເຫັນຂໍ້ມູນໄດ້.',
+            okText: 'ລຶບ PIN'
+        }).then(function (res) {
+            if (!res || res.confirmed !== true) { return; }
+            pinHash = '';
+            pinVersion = String(Date.now());
+            writeRaw(PIN_KEY, JSON.stringify({ sha: '', fnv: '', version: pinVersion }));
+            ensurePinState();
+            if (isShared()) {
+                queuePatch([{ config: { pinHash: '', lockEnabled: false, pinVersion: pinVersion } }]);
+                flushQueue();
+            }
+            toast('ລຶບ PIN ແລ້ວ', 'ok');
+        });
+    }
+
+    /* -------- ລັອກເອງເມື່ອບໍ່ໃຊ້ງານ -------- */
+    function resetAutoLockWatch() {
+        if (autoLockTimer) { clearTimeout(autoLockTimer); autoLockTimer = null; }
+        if (!pinHash || !unlocked) { return; }
+        autoLockTimer = setTimeout(function () {
+            if ($('pinGate').classList.contains('active')) { return; }
+            if ($('summary-view').classList.contains('active')) { closeSummary(); }
+            closeAllModals();
+            lockApp('ລັອກອັດຕະໂນມັດ ເນື່ອງຈາກບໍ່ໄດ້ໃຊ້ 10 ນາທີ');
+        }, AUTO_LOCK_MS);
+    }
+
+    function stopAutoLockWatch() {
+        if (autoLockTimer) { clearTimeout(autoLockTimer); autoLockTimer = null; }
+    }
+
+    /* =====================================================================
+       5. Stock mutations
+       ===================================================================== */
+    function findVariant(id) {
+        for (var i = 0; i < db.products.length; i++) {
+            if (db.products[i].id === id) { return db.products[i]; }
+        }
+        return null;
+    }
+
+    function logKeyOf(item) {
+        return (item.id || '') + '|' + item.name + '|' + item.color + '|' + item.size;
+    }
+    function logKeyOfLog(log) {
+        return (log.productId || '') + '|' + log.productName + '|' + log.color + '|' + log.size;
+    }
+
+    function changeStock(variantId, delta) {
+        var item = findVariant(variantId);
+        if (!item || !delta) { return false; }
+        var newQty = item.quantity + delta;
+        if (newQty < 0) {
+            toast('ສະຕັອກເຫຼືອ 0 ແລ້ວ ຫຼຸດຕື່ມບໍ່ໄດ້', 'err');
+            return false;
+        }
+
+        pushUndo((delta > 0 ? '+' : '') + delta + ' · ' + item.name + ' ' + item.color + '/' + item.size);
+        item.quantity = newQty;
+
+        var today = workDate();
+        var key = logKeyOf(item);
+        var staff = staffName();
+        var idx = -1;
+        for (var i = 0; i < db.historyLogs.length; i++) {
+            var l = db.historyLogs[i];
+            if (l.date === today && logKeyOfLog(l) === key) { idx = i; break; }
+        }
+
+        if (idx !== -1) {
+            db.historyLogs[idx].netChange += delta;
+            db.historyLogs[idx].timestamp = Date.now();
+            if (staff) { db.historyLogs[idx].staff = staff; }
+            if (db.historyLogs[idx].netChange === 0) { db.historyLogs.splice(idx, 1); }
+        } else {
+            db.historyLogs.push({
+                id: uid('h'), date: today, productId: item.id, productName: item.name,
+                color: item.color, size: item.size, netChange: delta, staff: staff, timestamp: Date.now()
+            });
+        }
+        dbRevision += 1;
+        scheduleSave();
+        patchDelta(item.id, delta);
+        renderAll();
+        return true;
+    }
+
+    function setStockExact(variantId, newQty) {
+        var item = findVariant(variantId);
+        if (!item) { return; }
+        var diff = newQty - item.quantity;
+        if (diff === 0) { toast('ຈຳນວນບໍ່ປ່ຽນ', 'info'); return; }
+        if (changeStock(variantId, diff)) {
+            toast('ຕັ້ງສະຕັອກ ' + item.name + ' ' + item.color + '/' + item.size + ' = ' + newQty, 'ok');
+        }
+    }
+
+    function deleteVariant(id) {
+        var item = findVariant(id);
+        if (!item) { return; }
+        var logCount = db.historyLogs.filter(function (l) { return l.productId === id; }).length;
+        askConfirm({
+            title: 'ລຶບ Size Variant',
+            message: 'ລຶບ <b>' + esc(item.name) + ' / ' + esc(item.color) + ' / ' + esc(item.size) +
+                     '</b> (ສະຕັອກ ' + item.quantity + ')?' +
+                     (logCount ? '<br><br>ມີປະຫວັດ ' + logCount + ' ລາຍການທີ່ອ້າງເຖິງລາຍການນີ້.' : ''),
+            extraLabel: logCount ? 'ລຶບປະຫວັດຂອງລາຍການນີ້ນຳ' : '',
+            extraDefault: false,
+            okText: 'ລຶບ'
+        }).then(function (res) {
+            if (!res || res.confirmed !== true) { return; }
+            pushUndo('ລຶບ ' + item.name + ' ' + item.color + '/' + item.size);
+            var goneLogIds = db.historyLogs.filter(function (l) { return l.productId === id; })
+                .map(function (l) { return l.id; });
+            db.products = db.products.filter(function (p) { return p.id !== id; });
+            if (res.extra === true) {
+                db.historyLogs = db.historyLogs.filter(function (l) { return l.productId !== id; });
+            }
+            normalizeOrder(db);
+            dbRevision += 1;
+            patchDelete([id], res.extra === true, goneLogIds);
+            commit('ລຶບແລ້ວ: ' + item.name + ' ' + item.color + '/' + item.size);
+        });
+    }
+
+    function deleteColorGroup(productName, colorName) {
+        var items = db.products.filter(function (p) { return p.name === productName && p.color === colorName; });
+        if (!items.length) { return; }
+        var totalQty = items.reduce(function (s, p) { return s + p.quantity; }, 0);
+        var ids = items.map(function (p) { return p.id; });
+        askConfirm({
+            title: 'ລຶບທັງສີ',
+            message: 'ລຶບທຸກຂະໜາດຂອງ <b>' + esc(productName) + ' / ' + esc(colorName) + '</b> (' +
+                     items.length + ' ລາຍການ, ສະຕັອກລວມ ' + totalQty + ')?',
+            extraLabel: 'ລຶບປະຫວັດຂອງກຸ່ມນີ້ນຳ',
+            okText: 'ລຶບທັງສີ'
+        }).then(function (res) {
+            if (!res || res.confirmed !== true) { return; }
+            pushUndo('ລຶບສີ ' + productName + ' ' + colorName);
+            var colorLogIds = db.historyLogs.filter(function (l) { return ids.indexOf(l.productId) !== -1; })
+                .map(function (l) { return l.id; });
+            db.products = db.products.filter(function (p) { return ids.indexOf(p.id) === -1; });
+            if (res.extra) {
+                db.historyLogs = db.historyLogs.filter(function (l) { return ids.indexOf(l.productId) === -1; });
+            }
+            normalizeOrder(db);
+            dbRevision += 1;
+            patchDelete(ids, !!res.extra, colorLogIds);
+            commit('ລຶບກຸ່ມສີແລ້ວ: ' + productName + ' / ' + colorName);
+        });
+    }
+
+    function deleteProduct(productName) {
+        var items = db.products.filter(function (p) { return p.name === productName; });
+        if (!items.length) { return; }
+        var totalQty = items.reduce(function (s, p) { return s + p.quantity; }, 0);
+        var ids = items.map(function (p) { return p.id; });
+        askConfirm({
+            title: 'ລຶບສິນຄ້າທັງໝົດ',
+            message: 'ລຶບ <b>' + esc(productName) + '</b> ທັງໝົດ ' + items.length + ' ລາຍການ (ສະຕັອກລວມ ' + totalQty + ')?',
+            extraLabel: 'ລຶບປະຫວັດຂອງສິນຄ້ານີ້ນຳ',
+            okText: 'ລຶບທັງສິນຄ້າ'
+        }).then(function (res) {
+            if (!res || res.confirmed !== true) { return; }
+            pushUndo('ລຶບສິນຄ້າ ' + productName);
+            var productLogIds = db.historyLogs.filter(function (l) { return ids.indexOf(l.productId) !== -1; })
+                .map(function (l) { return l.id; });
+            db.products = db.products.filter(function (p) { return p.name !== productName; });
+            if (res.extra) {
+                db.historyLogs = db.historyLogs.filter(function (l) { return ids.indexOf(l.productId) === -1; });
+            }
+            if (activeFilter === productName) { activeFilter = 'All'; }
+            normalizeOrder(db);
+            dbRevision += 1;
+            patchDelete(ids, !!res.extra, productLogIds);
+            commit('ລຶບສິນຄ້າແລ້ວ: ' + productName);
+        });
+    }
+
+    function moveColorOrder(productName, colorName, direction) {
+        var items = db.products.filter(function (p) { return p.name === productName; });
+        var colors = [];
+        items.forEach(function (p) { if (colors.indexOf(p.color) === -1) { colors.push(p.color); } });
+        colors.sort(function (a, b) { return firstIndexOf(items, 'color', a) - firstIndexOf(items, 'color', b); });
+
+        var idx = colors.indexOf(colorName);
+        var target = idx + direction;
+        if (idx === -1 || target < 0 || target >= colors.length) { return; }
+
+        pushUndo('ຍ້າຍລຳດັບສີ ' + colorName);
+        var tmp = colors[idx]; colors[idx] = colors[target]; colors[target] = tmp;
+        colors.forEach(function (c, i) {
+            items.forEach(function (p) { if (p.color === c) { p.colorIndex = i; } });
+        });
+        patchOrder(items.map(function (p) { return { id: p.id, colorIndex: p.colorIndex, sizeIndex: p.sizeIndex }; }));
+        commit();
+    }
+
+    function moveSizeOrder(variantId, direction) {
+        var target = findVariant(variantId);
+        if (!target) { return; }
+        var group = db.products.filter(function (p) { return p.name === target.name && p.color === target.color; });
+        group.sort(function (a, b) { return firstIndexOf(group, 'size', a.size) - firstIndexOf(group, 'size', b.size); });
+
+        var idx = -1;
+        for (var i = 0; i < group.length; i++) { if (group[i].id === variantId) { idx = i; } }
+        var to = idx + direction;
+        if (idx === -1 || to < 0 || to >= group.length) { return; }
+
+        pushUndo('ຍ້າຍລຳດັບຂະໜາດ ' + target.size);
+        var tmp = group[idx]; group[idx] = group[to]; group[to] = tmp;
+        group.forEach(function (p, i) { p.sizeIndex = i; });
+        patchOrder(group.map(function (p) { return { id: p.id, sizeIndex: p.sizeIndex }; }));
+        commit();
+    }
+
+    function updateColorPalette(colorName, newHex) {
+        if (!isHex(newHex)) { return; }
+        var upper = newHex.toUpperCase();
+        if (db.colorPalette[colorName] === upper) { return; }
+        pushUndo('ປ່ຽນສີ ' + colorName);
+        db.colorPalette[colorName] = upper;
+        saveData();
+        patchPalette([{ colorName: colorName, hex: upper }]);
+        renderAll();
+        toast('ປ່ຽນສີ "' + colorName + '" ແລ້ວ — ໃຊ້ກັບທຸກສິນຄ້າທີ່ມີສີນີ້', 'info', 3200);
+    }
+
+    /* =====================================================================
+       6. Rendering
+       ===================================================================== */
+    function renderAll() {
+        renderSidebar();
+        renderInventory();
+        renderHistory();
+        renderSyncBar();
+    }
+
+    function renderSidebar() {
+        var totalStock = db.products.reduce(function (s, p) { return s + p.quantity; }, 0);
+        var today = ymd(new Date());
+        var outToday = db.historyLogs
+            .filter(function (l) { return l.date === today && l.netChange < 0; })
+            .reduce(function (s, l) { return s + Math.abs(l.netChange); }, 0);
+        var lowCount = db.products.filter(function (p) { return p.quantity < LOW_STOCK; }).length;
+
+        $('stat-total').textContent = totalStock;
+        $('stat-out').textContent = outToday;
+        $('stat-low').textContent = lowCount;
+
+        var names = [];
+        db.products.forEach(function (p) { if (names.indexOf(p.name) === -1) { names.push(p.name); } });
+        names.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); });
+
+        var html = '<button type="button" class="btn filter-btn ' + (activeFilter === 'All' ? 'is-active' : '') +
+                   '" data-action="filter" data-filter="All">All Products <span style="opacity:.7">(' + db.products.length + ')</span></button>';
+        names.forEach(function (name) {
+            var count = db.products.filter(function (p) { return p.name === name; }).length;
+            html += '<button type="button" class="btn filter-btn ' + (activeFilter === name ? 'is-active' : '') +
+                    '" data-action="filter" data-filter="' + esc(name) + '">' + esc(name) +
+                    ' <span style="opacity:.7">(' + count + ')</span></button>';
+        });
+        $('product-filter-list').innerHTML = html;
+    }
+
+    function matchesFilters(p) {
+        if (activeFilter !== 'All' && p.name !== activeFilter) { return false; }
+        if (lowOnly && p.quantity >= LOW_STOCK) { return false; }
+        if (query) {
+            var hay = (p.name + ' ' + p.color + ' ' + p.size).toLowerCase();
+            if (hay.indexOf(query) === -1) { return false; }
+        }
+        return true;
+    }
+
+    function renderInventory() {
+        var container = $('inventory-container');
+        var filtered = db.products.filter(matchesFilters);
+
+        if (!filtered.length) {
+            var msg = db.products.length === 0
+                ? 'ຍັງບໍ່ມີສິນຄ້າໃນລະບົບ'
+                : 'ບໍ່ພົບສິນຄ້າຕາມເງື່ອນໄຂ';
+            container.innerHTML = '<div class="empty-box">' + msg +
+                '<small>' + (db.products.length === 0
+                    ? 'ກົດ "+ Add Product" ເພື່ອເລີ່ມ ຫຼື Import ໄຟລ໌ສຳຮອງຂໍ້ມູນ'
+                    : 'ລອງລຶບຄຳຄົ້ນຫາ ຫຼື ປ່ຽນຕົວກັ່ນຕອງ') + '</small></div>';
+            return;
+        }
+
+        // group by product name
+        var groups = {};
+        filtered.forEach(function (p) {
+            if (!groups[p.name]) { groups[p.name] = []; }
+            groups[p.name].push(p);
+        });
+
+        var productNames = Object.keys(groups);
+        productNames.sort(function (a, b) {
+            if (sortMode === 'name') { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); }
+            return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        });
+        if (sortMode === 'qty-desc' || sortMode === 'qty-asc') {
+            var sumOf = function (name) { return groups[name].reduce(function (s, p) { return s + p.quantity; }, 0); };
+            productNames.sort(function (a, b) {
+                var d = sumOf(a) - sumOf(b);
+                return sortMode === 'qty-desc' ? -d : d;
+            });
+        }
+
+        var html = '';
+        productNames.forEach(function (productName) {
+            var items = groups[productName];
+            var productTotal = items.reduce(function (s, p) { return s + p.quantity; }, 0);
+            var productLow = items.filter(function (p) { return p.quantity < LOW_STOCK; }).length;
+
+            html += '<div class="product-group">' +
+                '<div class="product-header">' +
+                    '<div>' +
+                        '<h3>' + esc(productName) + '</h3>' +
+                        '<div class="product-meta">ລວມ ' + productTotal + ' ຊິ້ນ · ' + items.length + ' ລາຍການ' +
+                        (productLow ? ' · <span style="color:var(--brand-red)">ໃກ້ໝົດ ' + productLow + '</span>' : '') + '</div>' +
+                    '</div>' +
+                    '<div style="display:flex; gap:.5rem; flex-wrap:wrap;">' +
+                        '<button type="button" class="btn btn-yellow" data-action="modal-add" data-prefill="' + esc(productName) + '">+ Add Variant</button>' +
+                        '<button type="button" class="btn btn-danger" data-action="del-product" data-name="' + esc(productName) + '">ລຶບສິນຄ້າ</button>' +
+                    '</div>' +
+                '</div>';
+
+            var colorGroups = {};
+            items.forEach(function (item) {
+                if (!colorGroups[item.color]) { colorGroups[item.color] = []; }
+                colorGroups[item.color].push(item);
+            });
+            var colorNames = Object.keys(colorGroups);
+            colorNames.sort(function (a, b) {
+                return firstIndexOf(items, 'color', a) - firstIndexOf(items, 'color', b);
+            });
+
+            colorNames.forEach(function (colorName, cIndex) {
+                var hex = getColorHex(colorName);
+                var isDark = getLuminance(hex) < 0.45;
+                var cItems = colorGroups[colorName].slice().sort(function (a, b) {
+                    return firstIndexOf(colorGroups[colorName], 'size', a.size) - firstIndexOf(colorGroups[colorName], 'size', b.size);
+                });
+
+                html += '<div class="color-block' + (isDark ? ' dark-mode' : '') + '" style="background-color:' + esc(hex) + ';">' +
+                    '<div class="color-header">' +
+                        '<div class="color-header-name">' +
+                            '<input type="color" class="color-picker-input" value="' + esc(hex) + '" ' +
+                                'data-action="color-pick" data-color="' + esc(colorName) + '" ' +
+                                'aria-label="ປ່ຽນສີ ' + esc(colorName) + '">' +
+                            '<span class="color-label">' + esc(colorName) + '</span>' +
+                        '</div>' +
+                        '<div style="display:flex; gap:.5rem; flex-wrap:wrap;">' +
+                            '<button type="button" class="btn-icon" data-action="color-up" data-name="' + esc(productName) + '" data-color="' + esc(colorName) + '"' +
+                                (cIndex === 0 ? ' disabled' : '') + ' aria-label="ຍ້າຍສີຂຶ້ນ">▲</button>' +
+                            '<button type="button" class="btn-icon" data-action="color-down" data-name="' + esc(productName) + '" data-color="' + esc(colorName) + '"' +
+                                (cIndex === colorNames.length - 1 ? ' disabled' : '') + ' aria-label="ຍ້າຍສີລົງ">▼</button>' +
+                            '<button type="button" class="btn btn-danger" data-action="del-color" data-name="' + esc(productName) + '" data-color="' + esc(colorName) + '">ລຶບສີ</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="sizes-grid">';
+
+                cItems.forEach(function (item, sIndex) {
+                    html += '<div class="size-card">' +
+                        '<div class="size-header">' +
+                            '<div style="display:flex; gap:.35rem; align-items:center;">' +
+                                '<button type="button" class="btn-icon" data-action="size-up" data-id="' + esc(item.id) + '"' +
+                                    (sIndex === 0 ? ' disabled' : '') + ' aria-label="ຍ້າຍຂະໜາດກ່ອນ">◀</button>' +
+                                '<button type="button" class="btn-icon" data-action="size-down" data-id="' + esc(item.id) + '"' +
+                                    (sIndex === cItems.length - 1 ? ' disabled' : '') + ' aria-label="ຍ້າຍຂະໜາດຕໍ່ໄປ">▶</button>' +
+                                '<span class="size-label" title="' + esc(item.size) + '">' + esc(item.size) + '</span>' +
+                                (item.quantity < LOW_STOCK ? '<span class="low-badge">ໃກ້ໝົດ</span>' : '') +
+                            '</div>' +
+                            '<button type="button" class="btn-icon" data-action="del-variant" data-id="' + esc(item.id) + '" ' +
+                                'style="background:var(--brand-red); color:#fff;" aria-label="ລຶບຂະໜາດນີ້">X</button>' +
+                        '</div>' +
+                        '<div class="qty-controls">' +
+                            '<button type="button" class="btn-qty" data-action="qty-dec" data-id="' + esc(item.id) + '" ' +
+                                'aria-label="ຫຼຸດສະຕັອກ">−</button>' +
+                            '<button type="button" class="qty-number' + (item.quantity === 0 ? ' is-zero' : '') + '" ' +
+                                'data-action="qty-edit" data-id="' + esc(item.id) + '" ' +
+                                'title="ກົດເພື່ອພິມຈຳນວນທີ່ຖືກຕ້ອງ">' + item.quantity + '</button>' +
+                            '<button type="button" class="btn-qty" data-action="qty-inc" data-id="' + esc(item.id) + '" ' +
+                                'aria-label="ເພີ່ມສະຕັອກ">+</button>' +
+                        '</div>' +
+                    '</div>';
+                });
+
+                html += '</div></div>';
+            });
+
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    function renderHistory() {
+        var container = $('history-container');
+        if (!db.historyLogs.length) {
+            container.innerHTML = '<div class="empty-box">ຍັງບໍ່ມີປະຫວັດ<small>ທຸກຄັ້ງທີ່ກົດ +/- ຈະຖືກບັນທຶກຢູ່ນີ້</small></div>';
+            return;
+        }
+
+        var byDate = {};
+        db.historyLogs.slice().forEach(function (log) {
+            if (!byDate[log.date]) { byDate[log.date] = []; }
+            byDate[log.date].push(log);
+        });
+        var dates = Object.keys(byDate).sort().reverse();
+        var exists = {};
+        db.products.forEach(function (p) { exists[p.id] = true; });
+
+        var html = '';
+        dates.forEach(function (dateStr) {
+            var logs = byDate[dateStr].slice().sort(function (a, b) { return b.timestamp - a.timestamp; });
+            var dayNet = logs.reduce(function (s, l) { return s + Math.abs(l.netChange); }, 0);
+            html += '<div class="date-chip">' + esc(dateStr) + ' · ເຄື່ອນໄຫວລວມ ' + dayNet + '</div>';
+
+            logs.forEach(function (log) {
+                var isPlus = log.netChange > 0;
+                var hex = getColorHex(log.color);
+                var gone = log.productId && !exists[log.productId];
+                html += '<div class="history-item">' +
+                    '<div class="history-main">' +
+                        '<span class="swatch" style="background:' + esc(hex) + '"></span>' +
+                        '<div>' +
+                            '<div class="history-title">' + esc(log.productName) + (gone ? ' <span class="deleted-tag">(ລຶບແລ້ວ)</span>' : '') + '</div>' +
+                            '<div class="history-sub">ສີ: ' + esc(log.color) + ' · ຂະໜາດ: ' + esc(log.size) +
+                                (log.staff ? ' · ໂດຍ: ' + esc(log.staff) : '') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex; align-items:center; gap:.75rem;">' +
+                        '<div class="history-delta ' + (isPlus ? 'is-plus' : 'is-minus') + '">' +
+                            (isPlus ? '+' : '') + log.netChange +
+                        '</div>' +
+                        '<button type="button" class="btn-icon" data-action="del-log" data-id="' + esc(log.id) + '" ' +
+                            'aria-label="ລຶບລາຍການປະຫວັດນີ້" title="ລຶບລາຍການນີ້ (ຈະບໍ່ຄືນສະຕັອກ)">✕</button>' +
+                    '</div>' +
+                '</div>';
+            });
+        });
+        container.innerHTML = html;
+    }
+
+    /* =====================================================================
+       7. Modals
+       ===================================================================== */
+    var lastFocus = null;
+
+    function openModal(id) {
+        var el = $(id);
+        if (!el) { return; }
+        lastFocus = document.activeElement;
+        el.classList.add('active');
+        var first = el.querySelector('input:not([type=hidden]), button');
+        if (id === 'addModal') {
+            var nameInput = $('add-name');
+            setTimeout(function () { if (nameInput) { nameInput.focus(); nameInput.select(); } }, 40);
+        } else if (id === 'qtyModal') {
+            var qtyInput = $('qty-input');
+            setTimeout(function () { if (qtyInput) { qtyInput.focus(); qtyInput.select(); } }, 40);
+        } else if (first) {
+            setTimeout(function () { first.focus(); }, 40);
+        }
+    }
+
+    // closing a confirm dialog must settle its promise exactly once
+    function openConfirmModal() {
+        var el = $('confirmModal');
+        if (!el) { return; }
+        lastFocus = document.activeElement;
+        el.classList.add('active');
+        var okBtn = $('confirm-ok');
+        setTimeout(function () { if (okBtn) { okBtn.focus(); } }, 40);
+    }
+
+    function closeModal(id) {
+        var el = $(id);
+        if (el) { el.classList.remove('active'); }
+        if (id === 'confirmModal' && confirmActive) {
+            resolveConfirm(null);   // user dismissed it: answer is "no"
+        }
+        if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) { /* noop */ } }
+    }
+
+    function closeAllModals() {
+        var open = document.querySelectorAll('.modal-overlay.active');
+        for (var i = 0; i < open.length; i++) { open[i].classList.remove('active'); }
+        if (confirmActive) { resolveConfirm(null); }
+    }
+
+    /* =====================================================================
+       8. Add product / variant
+       ===================================================================== */
+    function handleAddSubmit(e) {
+        e.preventDefault();
+        var name = $('add-name').value.trim();
+        var colors = parseList($('add-colors').value);
+        var sizes = parseList($('add-sizes').value);
+
+        if (!name) { toast('ກະລຸນາໃສ່ຊື່ສິນຄ້າ', 'err'); return; }
+        if (!colors.length || !sizes.length) { toast('ກະລຸນາໃສ່ສີ ແລະ ຂະໜາດຢ່າງໜ້ອຍຢ່າງລະ 1', 'err'); return; }
+
+        pushUndo('ເພີ່ມ ' + name);
+
+        var productItems = db.products.filter(function (p) { return p.name === name; });
+        var maxColorIndex = -1, maxSizeIndex = -1;
+        productItems.forEach(function (p) {
+            if (p.colorIndex > maxColorIndex) { maxColorIndex = p.colorIndex; }
+            if (p.sizeIndex > maxSizeIndex) { maxSizeIndex = p.sizeIndex; }
+        });
+
+        var added = 0;
+        var remoteSeen = {};
+        db.products.forEach(function (p) { remoteSeen[p.id] = true; });
+        colors.forEach(function (color, ci) {
+            if (!db.colorPalette[color]) { db.colorPalette[color] = DEFAULT_COLORS[color] || '#FFFFFF'; }
+            var colorExists = productItems.some(function (p) { return p.color === color; });
+            var colorIx = colorExists ? null : (maxColorIndex + 1 + ci);
+            sizes.forEach(function (size, si) {
+                var exists = db.products.some(function (p) {
+                    return p.name === name && p.color === color && p.size === size;
+                });
+                if (exists) { return; }
+                db.products.push({
+                    id: uid('v'),
+                    name: name, color: color, size: size, quantity: 0,
+                    colorIndex: colorIx === null ? (maxColorIndex + 1) : colorIx,
+                    sizeIndex: si
+                });
+                added += 1;
+            });
+        });
+
+        if (!added) {
+            undoStack.pop();
+            $('undo-btn').disabled = undoStack.length === 0;
+            toast('ສິນຄ້ານີ້ມີທຸກສີ/ຂະໜາດທີ່ພິມແລ້ວ', 'info');
+            closeModal('addModal');
+            return;
+        }
+
+        normalizeOrder(db);
+        dbRevision += 1;
+        if (isShared()) {
+            patchAdd(db.products.filter(function (p) { return !remoteSeen[p.id]; }));
+        }
+        closeModal('addModal');
+        $('add-form').reset();
+        activeFilter = activeFilter === 'All' ? 'All' : activeFilter;
+        commit('ເພີ່ມ ' + added + ' ລາຍການ: ' + name);
+    }
+
+    /* =====================================================================
+       9. Import / export
+       ===================================================================== */
+    function download(filename, content, mime) {
+        var blob = new Blob([content], { type: mime || 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    }
+
+    function exportData() {
+        var payload = {
+            app: 'TIBKAO STOCK', schema: SCHEMA, exportedAt: new Date().toISOString(),
+            counts: { products: db.products.length, historyLogs: db.historyLogs.length },
+            products: db.products, historyLogs: db.historyLogs, colorPalette: db.colorPalette
+        };
+        download('TIBKAO_Backup_' + ymd(new Date()) + '.json', JSON.stringify(payload, null, 2));
+        toast('Export ແລ້ວ — ເກັບໄຟລ໌ໄວ້ຄົນລະບ່ອນທີ່ປອດໄພ', 'ok', 3600);
+    }
+
+    function csvCell(value) {
+        var s = String(value === undefined || value === null ? '' : value);
+        if (/^[=+\-@\t\r]/.test(s)) { s = "'" + s; }
+        if (/[",\n\r]/.test(s)) { s = '"' + s.replace(/"/g, '""') + '"'; }
+        return s;
+    }
+
+    function exportCsv() {
+        var rows = [['ProductName', 'Color', 'Size', 'Quantity', 'ColorIndex', 'SizeIndex']];
+        db.products.slice().sort(function (a, b) {
+            var n = a.name.localeCompare(b.name);
+            if (n) { return n; }
+            return a.colorIndex - b.colorIndex || a.sizeIndex - b.sizeIndex;
+        }).forEach(function (p) {
+            rows.push([p.name, p.color, p.size, p.quantity, p.colorIndex, p.sizeIndex]);
+        });
+        var csv = '\uFEFF' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n');
+        download('TIBKAO_Stock_' + ymd(new Date()) + '.csv', csv, 'text/csv;charset=utf-8');
+        toast('Export CSV ແລ້ວ (ເປີດໃນ Excel ໄດ້)', 'ok');
+    }
+
+    function importData(file) {
+        if (!file) { return; }
+        if (file.size > 25 * 1024 * 1024) { toast('ໄຟລ໌ໃຫຍ່ເກີນໄປ (ສູງສຸດ 25MB)', 'err'); return; }
+        var reader = new FileReader();
+        reader.onerror = function () { toast('ອ່ານໄຟລ໌ບໍ່ໄດ້', 'err'); };
+        reader.onload = function (evt) {
+            var parsed;
+            try { parsed = JSON.parse(evt.target.result); }
+            catch (e) { toast('ໄຟລ໌ນີ້ບໍ່ແມ່ນ JSON ທີ່ຖືກຕ້ອງ', 'err', 4000); return; }
+
+            if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.products)) {
+                toast('ໄຟລ໌ນີ້ບໍ່ມີຂໍ້ມູນ products ທີ່ຖືກຕ້ອງ — ບໍ່ໄດ້ທັບຫຍັງ', 'err', 5000);
+                return;
+            }
+
+            var incoming = sanitizeDB(parsed);
+            if (!incoming.products.length) {
+                toast('ໄຟລ໌ນີ້ບໍ່ມີລາຍການສິນຄ້າ — ບໍ່ໄດ້ທັບຫຍັງ', 'err', 5000);
+                return;
+            }
+
+            var msg = 'ພົບ ' + incoming.products.length + ' ລາຍການ ແລະ ປະຫວັດ ' + incoming.historyLogs.length + ' ລາຍການ.' +
+                      '<br><br>ຂໍ້ມູນປັດຈຸບັນ (' + db.products.length + ' ລາຍການ) ຈະຖືກທັບ. ' +
+                      'ລະບົບຈະ export ໄຟລ໌ສຳຮອງຂອງປັດຈຸບັນໃຫ້ອັດຕະໂນມັດກ່ອນ.';
+
+            askConfirm({
+                title: 'Import ຂໍ້ມູນ',
+                message: msg,
+                extraLabel: 'ລວມປະຫວັດເຂົ້າກັບຂອງເກົ່າ (ບໍ່ທັບ)',
+                okText: 'Import ແລະ ທັບຂໍ້ມູນເກົ່າ'
+            }).then(function (res) {
+                if (!res || res.confirmed !== true) { toast('ຍົກເລິກ import', 'info'); return; }
+
+                var safety = JSON.stringify({
+                    app: 'TIBKAO STOCK', note: 'auto backup before import', at: new Date().toISOString(),
+                    products: db.products, historyLogs: db.historyLogs, colorPalette: db.colorPalette
+                }, null, 2);
+                download('TIBKAO_BEFORE_IMPORT_' + ymd(new Date()) + '.json', safety);
+                if (!writeRaw(BACKUP_KEY, JSON.stringify({ at: Date.now(), db: db }))) {
+                    toast('ສຳຮອງອັດຕະໂນມັດບໍ່ສຳເລັດ — ກະລຸນາເກັບໄຟລ໌ທີ່ດາວໂຫຼດມາໃຫ້ດີ', 'err', 6000);
+                }
+
+                pushUndo('Import ຂໍ້ມູນ');
+                if (res.extra) {
+                    var merged = db.historyLogs.concat(incoming.historyLogs);
+                    incoming.historyLogs = merged;
+                    incoming.products = mergeProducts(db.products, incoming.products);
+                }
+                db = sanitizeDB(incoming);
+                activeFilter = 'All';
+                undoStack = [];
+                dbRevision += 1;
+                if (isShared()) { patchReplaceAll(db); }
+                if (!saveData()) { toast('ບັນທຶກບໍ່ສຳເລັດ', 'err', 6000); }
+                renderAll();
+                toast('Import ສຳເລັດ: ' + db.products.length + ' ລາຍການ', 'ok', 4000);
+            });
+        };
+        reader.readAsText(file);
+    }
+
+    function mergeProducts(oldList, newList) {
+        var out = newList.slice();
+        oldList.forEach(function (op) {
+            var found = out.some(function (np) {
+                return np.name === op.name && np.color === op.color && np.size === op.size;
+            });
+            if (!found) { out.push(op); }
+        });
+        return out;
+    }
+
+    /* =====================================================================
+       10. Summary report (HTML, printable) + PNG image
+       ===================================================================== */
+    function todaySets() {
+        var today = ymd(new Date());
+        var outItems = db.historyLogs.filter(function (l) { return l.date === today && l.netChange < 0; })
+            .sort(function (a, b) { return a.productName.localeCompare(b.productName); });
+        var inItems = db.historyLogs.filter(function (l) { return l.date === today && l.netChange > 0; })
+            .sort(function (a, b) { return a.productName.localeCompare(b.productName); });
+        var stockItems = db.products.slice().sort(function (a, b) {
+            var n = a.name.localeCompare(b.name);
+            if (n) { return n; }
+            return a.colorIndex - b.colorIndex || a.sizeIndex - b.sizeIndex;
+        });
+        return { today: today, outItems: outItems, inItems: inItems, stockItems: stockItems };
+    }
+
+    function reportTable(rows, headers, totalLabel) {
+        if (!rows.length) { return '<div class="empty-box">ບໍ່ມີຂໍ້ມູນ</div>'; }
+        var html = '<table class="report-table"><thead><tr>';
+        headers.forEach(function (h) { html += '<th>' + esc(h) + '</th>'; });
+        html += '</tr></thead><tbody>';
+        var total = 0;
+        rows.forEach(function (r) {
+            html += '<tr>';
+            r.cells.forEach(function (c, i) {
+                html += i === r.cells.length - 1 ? '<td class="num">' + esc(c) + '</td>' : '<td>' + esc(c) + '</td>';
+            });
+            html += '</tr>';
+            total += toInt(r.value, 0);
+        });
+        if (totalLabel) {
+            html += '<tr class="total-row"><td colspan="' + (headers.length - 1) + '">' + esc(totalLabel) + '</td>' +
+                    '<td class="num">' + total + '</td></tr>';
+        }
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function buildSummaryHtml() {
+        var s = todaySets();
+        var staff = ($('staff-input') && $('staff-input').value.trim()) || '-';
+        var totalStock = s.stockItems.reduce(function (a, p) { return a + p.quantity; }, 0);
+
+        var html = '<div class="report-head">' +
+            '<div><div class="report-title">TIBKAO STOCK</div>' +
+            '<div class="report-sub">ລາຍງານສະຕັອກປະຈຳວັນ · ' + esc(s.today) + '</div></div>' +
+            '<div class="report-sub">ພິມເມື່ອ: ' + esc(ymd(new Date()) + ' ' + nowLabel()) + '<br>ຜູ້ບັນທຶກ: ' + esc(staff) + '</div>' +
+            '</div>';
+
+        html += '<div class="report-section-title">📤 ສິນຄ້າອອກມື້ນີ້ (Out Today)</div>';
+        html += reportTable(s.outItems.map(function (l) {
+            return { cells: [l.productName, l.color, l.size, Math.abs(l.netChange)], value: Math.abs(l.netChange) };
+        }), ['ສິນຄ້າ', 'ສີ', 'ຂະໜາດ', 'ຈຳນວນອອກ'], 'ລວມອອກທັງໝົດ');
+
+        if (s.inItems.length) {
+            html += '<div class="report-section-title">📥 ຮັບເຂົ້າມື້ນີ້ (In Today)</div>';
+            html += reportTable(s.inItems.map(function (l) {
+                return { cells: [l.productName, l.color, l.size, l.netChange], value: l.netChange };
+            }), ['ສິນຄ້າ', 'ສີ', 'ຂະໜາດ', 'ຈຳນວນເຂົ້າ'], 'ລວມເຂົ້າທັງໝົດ');
+        }
+
+        html += '<div class="report-section-title">📦 ສະຕັອກຄົງເຫຼືອ (Current Stock)</div>';
+        html += reportTable(s.stockItems.map(function (p) {
+            return { cells: [p.name, p.color, p.size, p.quantity], value: p.quantity };
+        }), ['ສິນຄ້າ', 'ສີ', 'ຂະໜາດ', 'ຄົງເຫຼືອ'], 'ລວມຄົງເຫຼືອທັງໝົດ');
+
+        html += '<div class="report-foot"><span>Offline App by TIBKAO STOCK</span>' +
+                '<span>ຈຳນວນລາຍການທັງໝົດ: ' + s.stockItems.length + ' · ລວມ ' + totalStock + ' ຊິ້ນ</span></div>';
+        return html;
+    }
+
+    function openSummary() {
+        $('summary-content').innerHTML = buildSummaryHtml();
+        $('summary-view').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSummary() {
+        $('summary-view').classList.remove('active');
+        document.body.classList.remove('printing');
+        document.body.style.overflow = '';
+    }
+
+    function printSummary() {
+        document.body.classList.add('printing');
+        setTimeout(function () {
+            window.print();
+            setTimeout(function () { document.body.classList.remove('printing'); }, 800);
+        }, 60);
+    }
+
+    function generateSummaryImage() {
+        var s = todaySets();
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        if (!ctx) { toast('ອຸປະກອນນີ້ສ້າງຮູບບໍ່ໄດ້ — ໃຊ້ "ລາຍງານປະຈຳວັນ" ແລ້ວພິມແທນ', 'err', 5000); return; }
+
+        var W = 1920;
+        var headerH = 200;
+        var titleH = 90;
+        var rowH = 46;
+        var colX = [50, 985];
+        var colW = 880;
+        var textMax = 600;
+        var rightX = 800;
+
+        var leftRows = s.outItems.map(function (l) {
+            return { label: l.productName + ' [' + l.color + '] : ' + l.size, hex: getColorHex(l.color), num: String(Math.abs(l.netChange)) };
+        });
+        var rightRows = s.stockItems.map(function (p) {
+            return { label: p.name + ' [' + p.color + '] : ' + p.size, hex: getColorHex(p.color), num: String(p.quantity) };
+        });
+
+        if (!leftRows.length) { leftRows = [{ label: '- ບໍ່ມີສິນຄ້າອອກມື້ນີ້ -', hex: '#F4F4F5', num: '' }]; }
+        if (!rightRows.length) { rightRows = [{ label: '- ບໍ່ມີສະຕັອກ -', hex: '#F4F4F5', num: '' }]; }
+
+        var maxRows = Math.max(leftRows.length, rightRows.length);
+        var H = headerH + titleH + (maxRows * rowH) + 90;
+        if (H > 15000) {
+            toast('ລາຍການຫຼາຍເກີນໄປສຳລັບຮູບດຽວ — ກະລຸນາໃຊ້ "ລາຍງານປະຈຳວັນ" ແລ້ວພິມ PDF', 'err', 6000);
+            return;
+        }
+
+        canvas.width = W;
+        canvas.height = H;
+
+        ctx.fillStyle = '#F4F4F5';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#FFDB58';
+        ctx.fillRect(0, 0, W, 150);
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(0, 150, W, 8);
+
+        ctx.fillStyle = '#111111';
+        ctx.font = 'bold 58px sans-serif';
+        ctx.fillText('TIBKAO STOCK', 50, 92);
+        ctx.font = 'bold 34px sans-serif';
+        ctx.fillText('Daily Report - ' + s.today + '  |  printed ' + nowLabel(), 700, 92);
+
+        ctx.font = 'bold 40px sans-serif';
+        ctx.fillStyle = '#C53030';
+        ctx.fillText('OUT TODAY (ສິນຄ້າອອກມື້ນີ້)', colX[0], headerH - 20);
+        ctx.fillStyle = '#1F5FA8';
+        ctx.fillText('CURRENT STOCK (ສະຕັອກຄົງເຫຼືອ)', colX[1], headerH - 20);
+
+        var startY = headerH + titleH;
+        [leftRows, rightRows].forEach(function (rows, col) {
+            var y = startY;
+            rows.forEach(function (r) {
+                var x = colX[col];
+                ctx.fillStyle = r.hex;
+                ctx.fillRect(x, y - 30, 34, 34);
+                ctx.strokeStyle = '#111111';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(x, y - 30, 34, 34);
+
+                ctx.fillStyle = '#111111';
+                ctx.font = 'bold 29px sans-serif';
+                ctx.fillText(fitText(ctx, r.label, textMax), x + 55, y - 4);
+
+                if (r.num) {
+                    ctx.font = 'bold 32px sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(r.num, x + rightX + 60, y - 4);
+                    ctx.textAlign = 'left';
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(x, y + 11);
+                ctx.lineTo(x + colW, y + 11);
+                ctx.strokeStyle = '#DDDDDD';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                y += rowH;
+            });
+        });
+
+        ctx.fillStyle = '#555555';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText('Offline App by TIBKAO STOCK', 50, H - 40);
+
+        var url = canvas.toDataURL('image/png');
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'TIBKAO_Summary_' + s.today + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast('ດຶງຮູບສຳເລັດ', 'ok');
+    }
+
+    /* =====================================================================
+       11. Events (single delegated listener + key handling)
+       ===================================================================== */
+    function onClick(e) {
+        var el = e.target.closest ? e.target.closest('[data-action]') : null;
+        if (!el) { return; }
+        var action = el.getAttribute('data-action');
+        var id = el.getAttribute('data-id');
+
+        switch (action) {
+            case 'tab':
+                switchTab(el.getAttribute('data-tab'));
+                break;
+            case 'summary': openSummary(); break;
+            case 'summary-image': generateSummaryImage(); break;
+            case 'close-summary': closeSummary(); break;
+            case 'print-summary': printSummary(); break;
+            case 'undo': undo(); break;
+            case 'modal-add': openModal('addModal'); if (el.getAttribute('data-prefill')) { $('add-name').value = el.getAttribute('data-prefill'); } break;
+            case 'close-modal': closeModal(el.getAttribute('data-modal')); break;
+            case 'filter': setFilter(el.getAttribute('data-filter')); break;
+            case 'export': exportData(); break;
+            case 'export-csv': exportCsv(); break;
+            case 'clear-history': clearHistory(); break;
+            case 'qty-inc': changeStock(id, 1); break;
+            case 'qty-dec': changeStock(id, -1); break;
+            case 'qty-edit': openQtyModal(id); break;
+            case 'sync-now': syncNow(); break;
+            case 'lock-now': lockApp('ລັອກແລ້ວ'); break;
+            case 'pin-set':
+                if (setupStage === 'ready') { commitPinSetup(); } else { startPinSetup(); }
+                break;
+            case 'pin-remove': removePin(); break;
+            case 'open-setup': openSetup(); break;
+            case 'save-setup': saveSetup(); break;
+            case 'test-conn': testConn(); break;
+            case 'del-variant': deleteVariant(id); break;
+            case 'del-color': deleteColorGroup(el.getAttribute('data-name'), el.getAttribute('data-color')); break;
+            case 'del-product': deleteProduct(el.getAttribute('data-name')); break;
+            case 'del-log': deleteLog(id); break;
+            case 'color-up': moveColorOrder(el.getAttribute('data-name'), el.getAttribute('data-color'), -1); break;
+            case 'color-down': moveColorOrder(el.getAttribute('data-name'), el.getAttribute('data-color'), 1); break;
+            case 'size-up': moveSizeOrder(id, -1); break;
+            case 'size-down': moveSizeOrder(id, 1); break;
+            default: break;
+        }
+    }
+
+    function onChange(e) {
+        var el = e.target;
+        if (el.getAttribute && el.getAttribute('data-action') === 'color-pick') {
+            updateColorPalette(el.getAttribute('data-color'), el.value);
+        }
+    }
+
+    function onKeydown(e) {
+        if (e.key === 'Escape') {
+            if ($('summary-view').classList.contains('active')) { closeSummary(); return; }
+            closeAllModals();
+            return;
+        }
+        // Alt+Z = undo
+        if (e.altKey && (e.key === 'z' || e.key === 'Z')) {
+            e.preventDefault();
+            undo();
+        }
+    }
+
+    function switchTab(tab) {
+        var contents = document.querySelectorAll('.tab-content');
+        for (var i = 0; i < contents.length; i++) { contents[i].classList.remove('active'); }
+        var target = $('tab-' + tab);
+        if (target) { target.classList.add('active'); }
+        $('tab-btn-inventory').className = tab === 'inventory' ? 'btn btn-yellow' : 'btn';
+        $('tab-btn-history').className = tab === 'history' ? 'btn btn-yellow' : 'btn';
+    }
+
+    function setFilter(name) {
+        activeFilter = name;
+        $('inventory-view-title').textContent = name === 'All' ? 'All Products' : name;
+        renderAll();
+    }
+
+    function openSetup() {
+        $('cfg-url').value = cfg.url;
+        $('cfg-secret').value = cfg.secret;
+        $('cfg-device').value = cfg.device || (($('staff-input') && $('staff-input').value) || '');
+        $('setup-status').textContent = isShared()
+            ? ('ປັດຈຸບັນເຊື່ອມຕໍ່ຢູ່: ' + syncState)
+            : 'ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່';
+        $('setup-status').style.color = 'var(--brand-dark-gray)';
+        openModal('setupModal');
+    }
+
+    function openQtyModal(variantId) {
+        var item = findVariant(variantId);
+        if (!item) { return; }
+        $('qty-target').innerHTML = '<b>' + esc(item.name) + '</b> · ສີ ' + esc(item.color) + ' · ຂະໜາດ ' + esc(item.size) +
+                                    '<br>ສະຕັອກປັດຈຸບັນ: <b>' + item.quantity + '</b>';
+        $('qty-input').value = item.quantity;
+        $('qty-form').setAttribute('data-id', variantId);
+        openModal('qtyModal');
+    }
+
+    function deleteLog(id) {
+        var log = null;
+        for (var i = 0; i < db.historyLogs.length; i++) { if (db.historyLogs[i].id === id) { log = db.historyLogs[i]; } }
+        if (!log) { return; }
+        askConfirm({
+            title: 'ລຶບລາຍການປະຫວັດ',
+            message: 'ລຶບປະຫວັດ <b>' + esc(log.productName) + ' ' + esc(log.color) + '/' + esc(log.size) +
+                     '</b> ຂອງວັນທີ ' + esc(log.date) + ' ຈຳນວນ ' + log.netChange + '?' +
+                     '<br><br><b>ໝາຍເຫດ:</b> ສະຕັອກປັດຈຸບັນ <u>ຈະບໍ່</u> ຖືກປ່ຽນ — ລຶບສະເພາະປະຫວັດ.',
+            okText: 'ລຶບປະຫວັດ'
+        }).then(function (res) {
+            if (!res || res.confirmed !== true) { return; }
+            pushUndo('ລຶບປະຫວັດ ' + log.productName);
+            db.historyLogs = db.historyLogs.filter(function (l) { return l.id !== id; });
+            dbRevision += 1;
+            patchHistoryDelete([id]);
+            commit('ລຶບປະຫວັດແລ້ວ');
+        });
+    }
+
+    function clearHistory() {
+        if (!db.historyLogs.length) { toast('ບໍ່ມີປະຫວັດໃຫ້ລ້າງ', 'info'); return; }
+        var count = db.historyLogs.length;
+        var ids = db.historyLogs.map(function (l) { return l.id; });
+        askConfirm({
+            title: 'ລ້າງປະຫວັດທັງໝົດ',
+            message: 'ລຶບປະຫວັດທັງໝົດ ' + count + ' ລາຍການ?<br><br>' +
+                     'ສະຕັອກປັດຈຸບັນຈະບໍ່ປ່ຽນ ແລະ ຍັງ Undo ຄືນໄດ້.',
+            okText: 'ລ້າງປະຫວັດ'
+        }).then(function (res) {
+            if (!res || res.confirmed !== true) { return; }
+            pushUndo('ລ້າງປະຫວັດ');
+            db.historyLogs = db.historyLogs.filter(function (l) { return ids.indexOf(l.id) === -1; });
+            dbRevision += 1;
+            patchHistoryClear(ids);
+            commit('ລ້າງປະຫວັດແລ້ວ');
+        });
+    }
+
+    /* =====================================================================
+       12. Boot
+       ===================================================================== */
+    function bind() {
+        document.addEventListener('click', onClick);
+        document.addEventListener('change', onChange);
+
+        var addForm = $('add-form');
+        addForm.addEventListener('submit', handleAddSubmit);
+
+        $('qty-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var id = e.currentTarget.getAttribute('data-id');
+            var raw = $('qty-input').value.trim();
+            if (!/^\d+$/.test(raw)) { toast('ກະລຸນາໃສ່ຕົວເລກຈຳນວນເຕັມ 0 ຂຶ້ນໄປ', 'err'); return; }
+            closeModal('qtyModal');
+            setStockExact(id, parseInt(raw, 10));
+        });
+
+        $('confirm-ok').addEventListener('click', function () {
+            resolveConfirm({ confirmed: true, extra: $('confirm-extra').checked });
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(function (ov) {
+            ov.addEventListener('mousedown', function (e) {
+                if (e.target === ov) { closeModal(ov.id); }
+            });
+        });
+
+        $('search-input').addEventListener('input', function (e) {
+            query = e.target.value.trim().toLowerCase();
+            renderInventory();
+        });
+        $('sort-select').addEventListener('change', function (e) {
+            sortMode = e.target.value;
+            renderInventory();
+        });
+        $('low-only').addEventListener('change', function (e) {
+            lowOnly = e.target.checked;
+            renderInventory();
+        });
+
+        $('import-file').addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            importData(file);
+        });
+
+        var staffInput = $('staff-input');
+        var storedStaff = readRaw('TIBKAO_STAFF') || '';
+        if (storedStaff) { staffInput.value = storedStaff; }
+        staffInput.addEventListener('change', function () {
+            writeRaw('TIBKAO_STAFF', staffInput.value.trim());
+            if (isShared()) { cfg.device = staffInput.value.trim(); saveCfg(); renderSyncBar(); }
+        });
+
+        window.addEventListener('online', function () {
+            toast('ເນັດກັບມາແລ້ວ — ກຳລັງສົ່ງຂໍ້ມູນ', 'info');
+            flushQueue();
+            syncNow(true);
+        });
+        window.addEventListener('offline', function () {
+            setSyncState('offline');
+            toast('ເນັດຂາດ — ແກ້ຕໍ່ໄດ້ເລີຍ ຂໍ້ມູນຈະສົ່ງເມື່ອເນັດກັບມາ', 'err', 5000);
+        });
+
+        var pinForm = $('pin-form');
+        if (pinForm) { pinForm.addEventListener('submit', submitPin); }
+
+        ['click', 'keydown', 'pointerdown'].forEach(function (evt) {
+            document.addEventListener(evt, function () {
+                if (unlocked) { resetAutoLockWatch(); }
+            }, true);
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible' && pinHash && !unlocked && Date.now() >= pinBlockedUntil) {
+                try { $('pin-input').focus(); } catch (e) { /* noop */ }
+            }
+        });
+
+        document.addEventListener('keydown', onKeydown);
+
+        // cross-tab / cross-window sync
+        window.addEventListener('storage', function (e) {
+            if (e.key !== DB_KEY || !e.newValue) { return; }
+            try {
+                var incoming = JSON.parse(e.newValue);
+                db = sanitizeDB(incoming);
+                renderAll();
+                toast('ຂໍ້ມູນຖືກອັບເດດຈາກແທັບອື່ນ', 'info');
+            } catch (err) { /* ignore malformed */ }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            if (saveTimer) { saveData(); }
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden' && saveTimer) { saveData(); }
+        });
+    }
+
+    function boot() {
+        var result = loadData();
+        bind();
+        renderAll();
+        setSaveState('save');
+
+        var btn = $('undo-btn');
+        if (btn) { btn.disabled = true; }
+
+        if (result.migrated) {
+            toast('ພົບຂໍ້ມູນເວີຊັນເກົ່າ ແລະ ຍ້າຍເຂົ້າລະບົບໃໝ່ແລ້ວ (' + db.products.length + ' ລາຍການ)', 'ok', 6000);
+        } else if (!result.found) {
+            toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເລີ່ມດ້ວຍ "+ Add Product" ຫຼື Import ໄຟລ໌ JSON', 'info', 6000);
+        }
+        if (!safeStorage) {
+            toast('Browser ນີ້ບລັກການເກັບຂໍ້ມູນ — ຂໍ້ມູນຈະຫາຍເມື່ອປິດໜ້າ. ກະລຸນາ Export ໄວ້ທຸກຄັ້ງ', 'err', 9000);
+        }
+        var repoLink = $('repo-link');
+        if (repoLink && BUNDLED_REPO) {
+            repoLink.href = 'https://github.com/' + BUNDLED_REPO;
+            repoLink.style.display = '';
+        }
+        ensurePinState();
+        var cache = pinCache();
+        if (!pinHash && cache.sha && cache.version) {
+            // ຍັງບໍ່ທັນດຶງຈາກ server ແຕ່ເຄື່ອງນີ້ເຄີຍມີ PIN — ລັອກໄວ້ກ່ອນ
+            pinHash = cache.sha;
+            pinVersion = cache.version;
+        }
+        if (pinHash) {
+            lockApp();
+        } else {
+            unlocked = true;
+        }
+        startSync();
+        if (!BUNDLED.url && isShared() && !cfg.device) { openSetup(); }
+        window.TIBKAO = {
+            exportData: exportData,
+            exportCsv: exportCsv,
+            askConfirm: askConfirm,
+            resolveConfirm: resolveConfirm,
+            db: function () { return clone(db); },
+            syncNow: syncNow,
+            flushQueue: function () { return flushQueue(); },
+            setup: function (url, secret, device) {
+                cfg.url = url || ''; cfg.secret = secret || ''; cfg.device = device || '';
+                saveCfg();
+            },
+            pending: function () { return pending.length; },
+            syncState: function () { return syncState; },
+            isLocked: function () { return !!(pinHash && !unlocked); },
+            pinIsSet: function () { return !!pinHash; },
+            lock: function () { lockApp(); },
+            unlock: function () { unlockApp(); },
+            setPin: function (pin) {
+                return pinHashes(pin).promise.then(function (h) {
+                    pinHash = h.sha || h.fnv;
+                    pinVersion = String(Date.now());
+                    writeRaw(PIN_KEY, JSON.stringify({ sha: pinHash, fnv: h.fnv, version: pinVersion }));
+                    ensurePinState();
+                    return pinHash;
+                });
+            },
+            pinPayload: function () { return { config: { pinHash: pinHash, lockEnabled: !!pinHash, pinVersion: pinVersion } }; },
+            clearPin: function () {
+                pinHash = '';
+                pinVersion = String(Date.now());
+                writeRaw(PIN_KEY, JSON.stringify({ sha: '', fnv: '', version: pinVersion }));
+                ensurePinState();
+            },
+            submitPin: function (v) { $('pin-input').value = v; submitPin(); },
+            pinMsg: function () { return $('pin-msg').textContent; }
+        };
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();
+</script>
+</body>
+</html>
